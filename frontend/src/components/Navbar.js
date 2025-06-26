@@ -24,6 +24,9 @@ function BasicExample() {
           <Nav className="me-auto">
             <Link  className="btn btn-light mx-2" to="/posts">Post</Link>
           </Nav>
+          <Nav className="me-auto">
+            <Link  className="btn btn-light mx-2" to="/products">Products</Link>
+          </Nav>
           </div>
         </Navbar.Collapse>
       </Container>
