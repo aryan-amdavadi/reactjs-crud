@@ -1,117 +1,162 @@
-const express = require('express');
-require('dotenv').config();
-const mysql = require('mysql');
-const cors = require('cors');
-const multer = require('multer');
-const path = require('path');
-const nodemailer = require('nodemailer');
-const hbs = require('nodemailer-express-handlebars');
-
+const express = require("express");
+require("dotenv").config();
+const mysql = require("mysql");
+const handlebars = require("handlebars");
+const fs = require("fs");
+const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+const nodemailer = require("nodemailer");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
+//connection with mysql
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'student_db',
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "student_db",
 });
 
 db.connect((err) => {
   if (err) {
-    return console.error('MySQL Error:', err);
+    console.log(err);
+  } else {
+    console.log("Connected.");
   }
-  console.log('Connected to MySQL.');
 });
 
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'public/images'),
+  destination: (req, file, cb) => {
+    cb(null, "public/images");
+  },
   filename: (req, file, cb) => {
-    cb(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname));
-  },
-});
-const upload = multer({ storage });
-
-app.get('/', (req, res) => res.json('From Backend'));
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL,     
-    pass: process.env.PASSWORD,  
+    cb(
+      null,
+      file.fieldname + "_" + Date.now() + path.extname(file.originalname)
+    );
   },
 });
 
-transporter.use(
-  'compile',
-  hbs({
-    viewEngine: {
-      extname: '.hbs',
-      defaultLayout: false,
+const upload = multer({
+  storage: storage,
+});
+
+app.get("/", (req, res) => {
+  return res.json("From Backend");
+});
+
+//Getting Mysql Data For Users.
+app.get("/users", (req, res) => {
+  const mysql = "select * from emp";
+  db.query(mysql, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+//Getting Mysql Data For Posts.
+app.get("/posts", (req, res) => {
+  const mysql = "select * from posts";
+  db.query(mysql, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+//Getting MySql Data For Comments.
+app.get("/comments", (req, res) => {
+  const mysql = "select * from comments";
+  db.query(mysql, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  const sql = "SELECT * FROM emp WHERE Email = ? AND password = ?";
+  db.query(sql, [email, password], (error, results) => {
+    if (error) {
+      return res.status(500).json({ error });
+    }
+    if (results.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    // Return the first matched user
+    return res.status(200).json(results[0]);
+  });
+});
+
+function sendMail(email) {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASSWORD,
     },
-    viewPath: path.resolve(__dirname, 'template'),
-    extName: '.hbs',
-  })
-);
-
-async function sendResetPasswordMail(toEmail) {
-  const resetLink = `http://localhost:3000/resetpassword?email=${toEmail}`; 
+  });
+  const subject = "Reset Password For Tabster Account.";
+  const to = email;
+  const from = process.env.EMAIL;
+  const templateSource = fs.readFileSync(
+    path.join(__dirname, "reset.hbs"),
+    "utf8"
+  );
+  const template = handlebars.compile(templateSource);
+  const html = template();
 
   const mailOptions = {
-    from: process.env.EMAIL,
-    to: toEmail,
-    subject: 'Reset Password for Tabster',
-    template: 'resetPassword', 
-    context: { resetLink, year: new Date().getFullYear() },
+    from: from,
+    to: to,
+    subject: subject,
+    template: "reset",
   };
-  await transporter.sendMail(mailOptions);
+  let hbs;
+  (async () => {
+    hbs = (await import("nodemailer-express-handlebars")).default;
+
+    transporter.use(
+      "compile",
+      hbs({
+        viewEngine: { extname: ".hbs", defaultLayout: false },
+        viewPath: path.resolve(__dirname, "template"),
+        extName: ".hbs",
+      })
+    );
+    transporter.use(
+      "compile",
+      hbs({
+        viewEngine: {
+          extname: ".hbs",
+          defaultLayout: false,
+        },
+        viewPath: path.resolve(__dirname, "template"),
+        extName: ".hbs",
+      })
+    );
+  
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
+
+  })();
+
 }
 
-app.post('/api/forgot-password', async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email is required' });
-
-    await sendResetPasswordMail(email);
-    res.status(200).json({ message: 'Password reset mail sent!' });
-  } catch (error) {
-    console.error('Error sending reset mail:', error);
-    res.status(500).json({ message: 'Error sending mail', error });
-  }
-});
-
-// Get users
-app.get('/users', (req, res) => {
-  const sql = 'select * from emp';
-  db.query(sql, (error, data) => (error ? res.status(500).json(error) : res.json(data)));
-});
-
-// Get posts
-app.get('/posts', (req, res) => {
-  const sql = 'select * from posts';
-  db.query(sql, (error, data) => (error ? res.status(500).json(error) : res.json(data)));
-});
-
-// Get comments
-app.get('/comments', (req, res) => {
-  const sql = 'select * from comments';
-  db.query(sql, (error, data) => (error ? res.status(500).json(error) : res.json(data)));
-});
-
-// Login
-app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  const sql = 'SELECT * FROM emp WHERE Email = ? AND password = ?';
-  db.query(sql, [email, password], (error, results) => {
-    if (error) return res.status(500).json({ error });
-    if (results.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
-    res.status(200).json(results[0]);
-  });
+app.post("/api/forgot-password", (req, res) => {
+  const email = req.body.email;
+  sendMail(email);
 });
 
 app.post("/upload", upload.single("image"), (req, res) => {
@@ -222,16 +267,6 @@ app.post("/api/editcomment", (req, res) => {
   });
 });
 
-app.post("/api/changepassword", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  const editQuery = `update emp set password='${password}' where Email = '${email}'`;
-  db.query(editQuery, (error, data) => {
-    if (error) return res.json(error);
-    else return res.json(data);
-  });
-});
-
 app.delete("/api/deleteemployee", (req, res) => {
   const EmpId = req.body.Emp_Id;
 
@@ -264,5 +299,5 @@ app.delete("/api/deletecomment", (req, res) => {
 });
 
 app.listen(8081, () => {
-  console.log('Server listening on port 8081');
+  console.log("listnening");
 });

@@ -5,6 +5,7 @@ import ModalBody from "react-bootstrap/esm/ModalBody";
 import ModalFooter from "react-bootstrap/esm/ModalFooter";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import ForgotPass from "./ForgotPass";
 
 const AuthForm = () => {
   localStorage.removeItem("user_id");
@@ -12,6 +13,7 @@ const AuthForm = () => {
   const [errorModalShow, setErrorModalShow] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [modalImageOpen, setModalImageOpen] = useState(false);
+  const [forgotPassOpen, setForgotPassOpen] = useState(false);
   const [gender, setGender] = useState();
   let [image, setImage] = useState({});
   const handleImage = (e) => {
@@ -61,9 +63,6 @@ const AuthForm = () => {
         });
     }
   };
-  const handleForgotPassword = () =>{
-    
-  }
 
   return (
     <>
@@ -105,8 +104,12 @@ const AuthForm = () => {
           </button>
         </ModalFooter>
       </Modal>
-      <div className="auth-wrapper">
-        <div className="auth-card">
+      <ForgotPass show={forgotPassOpen} onClose={() => setForgotPassOpen(false)} />
+      <div className="auth-wrapper" style={{ display: forgotPassOpen ? "none" : "flex" }}>
+        <div
+          className="auth-card"
+          
+        >
           <div className="auth-tabs">
             <button
               className={`auth-tab ${isLogin ? "active" : ""}`}
@@ -363,7 +366,6 @@ const AuthForm = () => {
                   <input
                     type="email"
                     className="form-control"
-                    id="Email"
                     // value={formData.email}
                     // onChange={handleChange}
                     name="email"
@@ -371,7 +373,7 @@ const AuthForm = () => {
                     required
                   />
                 </div>
-                <div className="mb-3">
+                <div style={{ margin: "2px" }}>
                   <label
                     htmlFor="exampleFormControlInput1"
                     className="form-label"
@@ -389,24 +391,22 @@ const AuthForm = () => {
                     required
                   />
                 </div>
-                <div class="form-group">
+                <div className="form-group" style={{ margin: 0 }}>
                   <div>
-                    <button type="button" class="btn btn-outline-danger" style={{backgroundColor:"transparent", border:"none"}} oncClick={handleForgotPassword}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger"
+                      style={{ backgroundColor: "transparent", border: "none" }}
+                      onClick={() => {
+                        setForgotPassOpen(true);
+                      }}
+                    >
                       Forgot Password!
                     </button>
                   </div>
                 </div>
               </>
             )}
-
-            {/* <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            /> */}
             <button type="submit" className="auth-submit">
               {isLogin ? "Login" : "Sign Up"}
             </button>
