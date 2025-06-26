@@ -195,7 +195,9 @@ function PostContent(props) {
                       </i>
                     </button>
                   </div>
-                  <div style={{display:data.emp_id===Number(localStorage.getItem("user_id"))?"block":"none"}}>
+                  <div style={{
+                    display:data.emp_id===Number(localStorage.getItem("user_id")) || localStorage.getItem("role")==="admin"?"block":"none"
+                    }}>
                     <button
                       id={data.id}
                       state={{ message: data }}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import NewsContent from "./NewsContent";
 import Modal from "react-bootstrap/Modal";
 import axios from "axios";
@@ -7,9 +7,13 @@ import { useNavigate } from 'react-router-dom';
 
 function NewsLayout() {
   const navigate = useNavigate();
-  if(localStorage.getItem("user_id")===null){
-    navigate("/")
-  }
+  useEffect(() => {
+    if (localStorage.getItem("user_id") === null) {
+      navigate("/");
+    } else if (localStorage.getItem("role") === "user") {
+      navigate("/posts");
+    }
+  }, [navigate]);
   let [image, setImage] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [tableOpen, setTableOpen] = useState(true);

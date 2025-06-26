@@ -15,12 +15,16 @@ function BasicExample() {
         <Link className="btn btn-light mx-2" style={{fontSize:"larger", background:"transparent" }}>MyStudents Data</Link>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
+          <div style={{
+            display:localStorage.getItem("role")==="admin"?"flex":"none"
+            }}>
           <Nav className="me-auto">
             <Link  className="btn btn-light mx-2" to="/users">Users</Link>
           </Nav>
           <Nav className="me-auto">
             <Link  className="btn btn-light mx-2" to="/posts">Post</Link>
           </Nav>
+          </div>
         </Navbar.Collapse>
       </Container>
     </Navbar>

@@ -116,6 +116,11 @@ function Comments(props) {
                 <p>
                   <strong>
                     {empData && empData.find((user) => user.Emp_Id === comment.user_id)
+                      ? empData.find((user) => user.Emp_Id === comment.user_id).role === "admin" ? "Admin => " : ""
+                      : "Unknown"}
+                  </strong>
+                  <strong>
+                    {empData && empData.find((user) => user.Emp_Id === comment.user_id)
                       ? empData.find((user) => user.Emp_Id === comment.user_id).First_Name
                       : "Unknown"}
                   </strong>
@@ -134,7 +139,7 @@ function Comments(props) {
               </div>
               <div
                 id="actions"
-                style={{ display: Number(localStorage.getItem("user_id")) === Number(comment.user_id) ? "block" : "none" }}
+                style={{ display: Number(localStorage.getItem("user_id")) === Number(comment.user_id) || localStorage.getItem("role")==="admin" ? "block" : "none" }}
               >
                 {isEditing ? (
                   <button className="btn btn-sm mx-1" onClick={() => handleSaveEdit(comment.comment_id)} style={{color:"#007bff", width:"50px", height:"44px", fontSize:"25px"}}>

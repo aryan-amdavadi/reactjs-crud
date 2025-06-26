@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import ForgotPass from "./ForgotPass";
 
 const AuthForm = () => {
+  localStorage.removeItem("role")
   localStorage.removeItem("user_id");
   const navigate = useNavigate();
   const [errorModalShow, setErrorModalShow] = useState(false);
@@ -34,6 +35,7 @@ const AuthForm = () => {
         .post("http://localhost:8081/login", dataObject)
         .then((res) => {
           localStorage.setItem("user_id", res.data.Emp_Id);
+          localStorage.setItem("role", res.data.role);
           navigate("/posts", { state: res.data });
         })
         .catch((err) => {
