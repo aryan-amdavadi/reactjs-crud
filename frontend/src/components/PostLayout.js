@@ -4,8 +4,13 @@ import Modal from "react-bootstrap/Modal";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { useLocation } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 function PostLayout() {
+  const navigate = useNavigate();
+  if(localStorage.getItem("user_id")===null){
+    navigate("/")
+  }
   const location = useLocation();
   const user_details = location.state;
   const [tableOpen, setTableOpen] = useState(true);

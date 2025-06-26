@@ -6,7 +6,6 @@ import ModalBody from "react-bootstrap/esm/ModalBody";
 import Comments from "./Comments";
 
 function PostContent(props) {
-  
   //
   //
   //
@@ -98,7 +97,6 @@ function PostContent(props) {
     setId(data.id);
   };
 
-  
   const handleDeleteContent = () => {
     const DataObject = {
       id: id,
@@ -174,65 +172,71 @@ function PostContent(props) {
               </td>
               <td>{data.status}</td>
               <td>
-                <button
-                  id={data.id}
-                  state={{ message: data.Emp_Id }}
-                  style={{ border: "none", background: "transparent" }}
-                  className="delete mx-1"
-                  onClick={() => {
-                    setInspectPageOpen(true);
-                    handleInspect(data);
-                    setPostData(data);
-                  }}
-                  data-toggle="modal"
-                >
-                  <i
-                    className="material-icons"
-                    data-toggle="tooltip"
-                    title="inspect"
-                  >
-                    <i className="fa-regular fa-eye"></i>
-                  </i>
-                </button>
-                <button
-                  id={data.id}
-                  state={{ message: data }}
-                  style={{ border: "none", background: "transparent" }}
-                  href="#editpostModal"
-                  className="edit mx-1"
-                  onClick={() => {
-                    handleEdit(data);
-                    setModalOpen(true);
-                  }}
-                  data-toggle="modal"
-                >
-                  <i
-                    className="material-icons"
-                    data-toggle="tooltip"
-                    title="Edit"
-                  >
-                    &#xE254;
-                  </i>
-                </button>
-                <button
-                  id={data.id}
-                  state={{ message: data.Emp_Id }}
-                  style={{ border: "none", background: "transparent" }}
-                  className="delete mx-1"
-                  onClick={() => {
-                    setModalDeleteOpen(true);
-                    handleDelete(data);
-                  }}
-                  data-toggle="modal"
-                >
-                  <i
-                    className="material-icons"
-                    data-toggle="tooltip"
-                    title="Delete"
-                  >
-                    &#xE872;
-                  </i>
-                </button>
+                <div className="d-flex">
+                  <div>
+                    <button
+                      id={data.id}
+                      state={{ message: data.Emp_Id }}
+                      style={{ border: "none", background: "transparent" }}
+                      className="delete mx-1"
+                      onClick={() => {
+                        setInspectPageOpen(true);
+                        handleInspect(data);
+                        setPostData(data);
+                      }}
+                      data-toggle="modal"
+                    >
+                      <i
+                        className="material-icons"
+                        data-toggle="tooltip"
+                        title="inspect"
+                      >
+                        <i className="fa-regular fa-eye"></i>
+                      </i>
+                    </button>
+                  </div>
+                  <div style={{display:data.emp_id===Number(localStorage.getItem("user_id"))?"block":"none"}}>
+                    <button
+                      id={data.id}
+                      state={{ message: data }}
+                      style={{ border: "none", background: "transparent" }}
+                      href="#editpostModal"
+                      className="edit mx-1"
+                      onClick={() => {
+                        handleEdit(data);
+                        setModalOpen(true);
+                      }}
+                      data-toggle="modal"
+                    >
+                      <i
+                        className="material-icons"
+                        data-toggle="tooltip"
+                        title="Edit"
+                      >
+                        &#xE254;
+                      </i>
+                    </button>
+                    <button
+                      id={data.id}
+                      state={{ message: data.Emp_Id }}
+                      style={{ border: "none", background: "transparent" }}
+                      className="delete mx-1"
+                      onClick={() => {
+                        setModalDeleteOpen(true);
+                        handleDelete(data);
+                      }}
+                      data-toggle="modal"
+                    >
+                      <i
+                        className="material-icons"
+                        data-toggle="tooltip"
+                        title="Delete"
+                      >
+                        &#xE872;
+                      </i>
+                    </button>
+                  </div>
+                </div>
               </td>
             </tr>
           ))}
@@ -487,7 +491,7 @@ function PostContent(props) {
                       />
                     </div>
                   </div>
-                <Comments postID={userId} />
+                  <Comments postID={userId} />
                 </div>
               </div>
             </ModalBody>

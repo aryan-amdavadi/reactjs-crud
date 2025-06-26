@@ -4,6 +4,8 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const { log } = require("console");
+const nodemailer = require('nodemailer')
+const { v4: uuidv4 } = require('uuid')
 
 const app = express();
 app.use(express.json());
@@ -72,6 +74,21 @@ app.get("/comments", (req, res) => {
   db.query(mysql, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
+  });
+});
+
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+  const sql = "SELECT * FROM emp WHERE Email = ? AND password = ?";
+  db.query(sql, [email, password], (error, results) => {
+    if (error) {
+      return res.status(500).json({ error }); 
+    }
+    if (results.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    // Return the first matched user
+    return res.status(200).json(results[0]);
   });
 });
 

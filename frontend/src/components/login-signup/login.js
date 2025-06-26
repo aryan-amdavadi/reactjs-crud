@@ -7,9 +7,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const AuthForm = () => {
-  localStorage.removeItem("user_id")
+  localStorage.removeItem("user_id");
   const navigate = useNavigate();
-  const [data, setData] = useState({});
   const [errorModalShow, setErrorModalShow] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [modalImageOpen, setModalImageOpen] = useState(false);
@@ -19,14 +18,6 @@ const AuthForm = () => {
     document.getElementById("imagePreview").style.display = "block";
     setImage(URL.createObjectURL(e.target.files[0]));
   };
-  axios
-    .get("http://localhost:8081/users")
-    .then((res) => {
-      setData(res.data);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,17 +28,16 @@ const AuthForm = () => {
         email: formData.get("email"),
         password: formData.get("password"),
       };
-      for (let i = 0; i < data.length; i++) {
-        if (
-          data[i].Email === dataObject.email &&
-          data[i].password === dataObject.password
-        ) {
-          localStorage.setItem("user_id", data[i].Emp_Id);
-          navigate("/posts", { state: data[i]});
-        } else {
+      axios
+        .post("http://localhost:8081/login", dataObject)
+        .then((res) => {
+          localStorage.setItem("user_id", res.data.Emp_Id);
+          navigate("/posts", { state: res.data });
+        })
+        .catch((err) => {
+          console.log(err);
           setErrorModalShow(true);
-        }
-      }
+        });
     } else {
       var Hby = document.querySelector("#Hobbies");
       var HobbyObject = Array.from(Hby.options)
@@ -61,8 +51,7 @@ const AuthForm = () => {
         .post("http://localhost:8081/api/addemployee", formData)
         .then((responce) => {
           if (responce.data.code === undefined) {
-            navigate("");
-            alert("login to continue")
+            navigate("/posts");
           } else {
             setErrorModalShow(true);
           }
@@ -71,8 +60,10 @@ const AuthForm = () => {
           console.log("eerr", error);
         });
     }
-    // setFormData({ username: "", password: "", email: "" });
   };
+  const handleForgotPassword = () =>{
+    
+  }
 
   return (
     <>
@@ -397,6 +388,13 @@ const AuthForm = () => {
                     placeholder="Password"
                     required
                   />
+                </div>
+                <div class="form-group">
+                  <div>
+                    <button type="button" class="btn btn-outline-danger" style={{backgroundColor:"transparent", border:"none"}} oncClick={handleForgotPassword}>
+                      Forgot Password!
+                    </button>
+                  </div>
                 </div>
               </>
             )}

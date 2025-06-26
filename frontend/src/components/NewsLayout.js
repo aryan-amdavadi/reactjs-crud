@@ -3,8 +3,13 @@ import NewsContent from "./NewsContent";
 import Modal from "react-bootstrap/Modal";
 import axios from "axios";
 import Navbar from "./Navbar"
+import { useNavigate } from 'react-router-dom';
 
 function NewsLayout() {
+  const navigate = useNavigate();
+  if(localStorage.getItem("user_id")===null){
+    navigate("/")
+  }
   let [image, setImage] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [tableOpen, setTableOpen] = useState(true);
