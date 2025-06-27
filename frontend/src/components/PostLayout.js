@@ -3,7 +3,6 @@ import PostContent from "./PostContent";
 import Modal from "react-bootstrap/Modal";
 import axios from "axios";
 import Navbar from "./Navbar";
-import { useLocation } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
 
 function PostLayout() {
@@ -11,8 +10,6 @@ function PostLayout() {
   if(localStorage.getItem("user_id")===null){
     navigate("/")
   }
-  const location = useLocation();
-  const user_details = location.state;
   const [tableOpen, setTableOpen] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [empData, setEmpData] = useState({});
@@ -28,7 +25,7 @@ function PostLayout() {
       .then((res) => {
         setEmpData(res.data);
           for (let i = 0; i < empData.length; i++) {
-            if (res.data[i].Emp_Id === user_details.Emp_Id) {
+            if (res.data[i].Emp_Id === localStorage.getItem("user_id")) {
               setLoggedIn(res.data[i]);
             }
           }
@@ -46,8 +43,7 @@ function PostLayout() {
     setTableOpen(false);
     event.preventDefault();
     const formData = new FormData(event.target);
-    console.log(user_details.emp);
-    formData.append("emp_id", user_details.Emp_Id);
+    formData.append("emp_id", localStorage.getItem("user_id"));
     axios
       .post("http://localhost:8081/api/addpost", formData)
       .then((responce) => {
@@ -60,7 +56,6 @@ function PostLayout() {
     setTimeout(() => {
       setTableOpen(true);
     }, 1);
-    console.log(formData);
   };
   const handleImage = (e) => {
     document.getElementById("imagePreview").style.display = "block";

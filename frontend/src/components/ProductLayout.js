@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Navbar from "./Navbar";
-
+import axios from "axios";
 import Modal from "react-bootstrap/Modal";
 import ProductContent from "./ProductContent";
 
 function ProductLayout() {
   const [tableOpen, setTableOpen] = useState(true);
-  const [empData, setEmpData] = useState({});
-  const [loggedIn, setLoggedIn] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [image, setImage] = useState();
   const handleImage = (e) => {
@@ -15,7 +13,24 @@ function ProductLayout() {
     setImage(URL.createObjectURL(e.target.files[0]));
     document.getElementById("imageDiv").style.display = "none";
   };
-  const handleSubmit = () => {};
+  const handleSubmit = (e) => {
+    setTableOpen(false)
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    axios
+      .post("http://localhost:8081/api/addproduct", formData)
+      .then((responce) => {
+        console.log("Responce :", responce.data);
+        setTableOpen(true);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    setModalOpen(false);
+    setTimeout(()=>{
+      setTableOpen(true)
+    },1)
+  };
   return (
     <>
       <Navbar />
@@ -63,7 +78,7 @@ function ProductLayout() {
                   </div>
                 </div>
               </div>
-              {<ProductContent show={tableOpen} userData={loggedIn} />}
+              {<ProductContent show={tableOpen} />}
 
               {modalOpen && (
                 <Modal show={true}>
@@ -79,7 +94,7 @@ function ProductLayout() {
                           }}
                           className="btn btn-light"
                         >
-                          <i class="fa-solid fa-x"></i>
+                          <i className="fa-solid fa-x"></i>
                         </button>
                       </div>
                     </Modal.Header>

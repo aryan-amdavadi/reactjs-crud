@@ -1,19 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "react-bootstrap/Modal";
 import ModalBody from "react-bootstrap/ModalBody";
-import Comments from "./Comments";
+import axios from "axios";
 
 function ProductContent(props) {
+  const user_id = localStorage.getItem("user_id");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [inspectPageOpen, setInspectPageOpen] = useState(false);
-  const [userId, setUserId] = useState("");
-  const [title, setTitle] = useState("");
-  const [data,setData] = useState({})
+  const [id, setId] = useState();
+  const [price, setPrice] = useState("");
+  const [data, setData] = useState([]);
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
-  const [status, setStatus] = useState("");
-  const [postData, setPostData] = useState({});
+  const [title, setTitle] = useState("");
+  const [productData, setProductData] = useState({});
   const [postOwner, setPostOwner] = useState({
     First_Name: "",
     Last_Name: "",
@@ -21,44 +22,102 @@ function ProductContent(props) {
     Phone_No: "",
     Image: "",
   });
+  useEffect(() => {
+    if (props.show) {
+      axios
+        .get("http://localhost:8081/products")
+        .then((res) => {
+          setData(res.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [props.show]);
 
-
-  // Handler stubs (replace with your actual logic)
   const handleEdit = (data) => {
-    setPostData(data);
-    setTitle(data.title);
+    setId(data.id);
+    setProductData(data);
+    setPrice(data.price);
     setDescription(data.description);
-    setUserId(data.user_id);
-    setStatus(data.status);
+    setTitle(data.title);
     setImage(data.image);
   };
   const handleDelete = (data) => {
-    setPostData(data);
+    setProductData(data);
   };
   const handleDeleteContent = () => {
+    const DataObject = {
+      id: productData.id,
+    };
+    axios
+      .delete("http://localhost:8081/api/deleteproduct", {
+        data: DataObject,
+      })
+      .then((responce) => {
+        console.log("Responce :", responce.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    setModalDeleteOpen(false);
+    axios
+      .get("http://localhost:8081/products")
+      .then((res) => {
+        setData(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
     setModalDeleteOpen(false);
   };
   const handleInspect = (data) => {
-    setPostData(data);
-    setTitle(data.title);
+    const dataObject = {
+      user_id: user_id,
+    };
+    axios
+      .post("http://localhost:8081/postowner", dataObject)
+      .then((res) => {
+        setPostOwner(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+    setProductData(data);
+    setPrice(data.price);
     setDescription(data.description);
-    setStatus(data.status);
-    setUserId(data.user_id);
-    setPostOwner({
-      First_Name: "John",
-      Last_Name: "Doe",
-      Email: "john@example.com",
-      Phone_No: "1234567890",
-      Image: "default.jpg",
-    });
+    setTitle(data.title);
+    setImage(data.image);
   };
   const handleSubmit = (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
+    formData.append("id", id);
+    axios
+      .post("http://localhost:8081/api/editproduct", formData)
+      .then((responce) => {
+        console.log("Responce :", responce.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
+    axios
+      .get("http://localhost:8081/products")
+      .then((res) => {
+        setData(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
     setModalOpen(false);
   };
   const handleImage = (e) => {
     if (e.target.files && e.target.files[0]) {
       setImage(URL.createObjectURL(e.target.files[0]));
+      document.getElementById("initialImage").style.display = "none";
+      document.getElementById("changedImage").style.display = "block";
     }
   };
 
@@ -105,7 +164,7 @@ function ProductContent(props) {
                       onClick={() => {
                         setInspectPageOpen(true);
                         handleInspect(data);
-                        setPostData(data);
+                        setProductData(data);
                       }}
                       data-toggle="modal"
                     >
@@ -194,23 +253,6 @@ function ProductContent(props) {
           <form onSubmit={handleSubmit} encType="multipart/form-data">
             <Modal.Body>
               <div className="mb-3">
-                <label htmlFor="User_Id" className="form-label">
-                  Post Id
-                </label>
-                <input
-                  type="number"
-                  name="user_id"
-                  className="form-control"
-                  value={userId}
-                  onChange={(e) => {
-                    setUserId(e.target.value);
-                  }}
-                  id="user_id"
-                  placeholder="User Id"
-                  required
-                />
-              </div>
-              <div className="mb-3">
                 <label htmlFor="Title" className="form-label">
                   Title
                 </label>
@@ -263,7 +305,7 @@ function ProductContent(props) {
               <div className="mb-3 my-3" id="imagePreview">
                 <p>Preview</p>
                 <img
-                  src={`http://localhost:8081/images/${postData.image}`}
+                  src={`http://localhost:8081/images/${productData.image}`}
                   style={{ border: "2px solid black" }}
                   alt="Preview"
                   height={200}
@@ -279,51 +321,22 @@ function ProductContent(props) {
                   id="changedImage"
                 />
               </div>
-              <div className="my-2">
-                <div>
-                  <label
-                    htmlFor="exampleFormControlInput1"
-                    className="form-label my-1"
-                  >
-                    Status
-                  </label>
-                </div>
-                <div className="d-flex">
-                  <div className="form-check mx-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      value={"Active"}
-                      checked={status === "Active" ? true : false}
-                      onChange={(e) => {
-                        setStatus(e.target.value);
-                      }}
-                      name="status"
-                      id="Status"
-                      required
-                    />
-                    <label className="form-check-label" htmlFor="radioDefault1">
-                      Active
-                    </label>
-                  </div>
-                  <div className="form-check mx-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      value={"UnActive"}
-                      checked={status === "UnActive" ? true : false}
-                      onChange={(e) => {
-                        setStatus(e.target.value);
-                      }}
-                      name="status"
-                      id="Status"
-                      required
-                    />
-                    <label className="form-check-label" htmlFor="radioDefault1">
-                      UnActive
-                    </label>
-                  </div>
-                </div>
+              <div className="mb-3">
+                <label htmlFor="Title" className="form-label">
+                  Price
+                </label>
+                <input
+                  type="number"
+                  className="form-control"
+                  id="price"
+                  name="price"
+                  value={price}
+                  onChange={(e) => {
+                    setPrice(e.target.value);
+                  }}
+                  placeholder="Price"
+                  required
+                />
               </div>
             </Modal.Body>
             <Modal.Footer>
@@ -385,13 +398,33 @@ function ProductContent(props) {
               </div>
               <div className="container main">
                 <div className="top-section">
-                  <div className="card info-card">
-                    <h3>Title</h3>
-                    <p>{title}</p>
-                    <h3>Description</h3>
-                    <p>{description}</p>
-                    <h3>Status</h3>
-                    <p className="status active">{status}</p>
+                  <div
+                    className="card info-card d-flex"
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div>
+                      <h3>Title</h3>
+                      <p>{title}</p>
+                      <h3>Price</h3>
+                      <p>{price}</p>
+                      <h3>Description</h3>
+                      <p>{description}</p>
+                    </div>
+                    <div>
+                      <img
+                        src={`http://localhost:8081/images/${image}`}
+                        alt={"profile Pic"}
+                        height="100"
+                        width="100"
+                        style={{
+                          border: "2px solid black",
+                          borderRadius: "5px",
+                        }}
+                      />
+                    </div>
                   </div>
 
                   <div
@@ -406,6 +439,10 @@ function ProductContent(props) {
                       <p>
                         {postOwner.First_Name} {postOwner.Last_Name}
                       </p>
+                      <h3>Email</h3>
+                      <p>{postOwner.Email}</p>
+                      <h3>Phone Number</h3>
+                      <p>{postOwner.Phone_No}</p>
                     </div>
                     <div className="mx-3" style={{ marginRight: "45px" }}>
                       <h3>Profile Picture</h3>
@@ -421,7 +458,6 @@ function ProductContent(props) {
                       />
                     </div>
                   </div>
-                  <Comments postID={userId} />
                 </div>
               </div>
             </ModalBody>

@@ -114,6 +114,23 @@ app.post('/login', (req, res) => {
   });
 });
 
+//using Emp_Id
+app.post('/postowner', (req, res) => {
+  const user_id = req.body.user_id
+  const sql = `SELECT * FROM emp WHERE Emp_Id = ${user_id}`;
+  db.query(sql, (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
+    res.status(200).json(results[0]);
+  });
+});
+
+//Get Products
+app.get('/products', (req, res) => {
+  const sql = 'select * from products';
+  db.query(sql, (error, data) => (error ? res.status(500).json(error) : res.json(data)));
+});
+
 app.post("/upload", upload.single("image"), (req, res) => {
   const image = req.file.filename;
 });
@@ -159,6 +176,20 @@ app.post("/api/addcomment", (req, res) => {
   const post_id = req.body.post_id;
   const user_id = req.body.user_id;
   const addQuery = `insert into comments (post_id , user_id , comment , date) values(${post_id},${user_id},'${comment}', NOW())`;
+  db.query(addQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/api/addproduct", upload.single("image"), (req, res) => {
+  //req.file => Image Details
+  //req.body => Body Details
+  const title = req.body.title;
+  const description = req.body.description;
+  const image = req.file.filename;
+  const price = req.body.price;
+  const addQuery = `insert into products (title, description,price, image) values('${title}','${description}',${price},'${image}')`;
   db.query(addQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
@@ -222,6 +253,27 @@ app.post("/api/editcomment", (req, res) => {
   });
 });
 
+app.post("/api/editproduct", upload.single("image"), (req, res) => {
+  const title = req.body.title;
+  const description = req.body.description;
+  const price = req.body.price;
+  const id = req.body.id
+  try {
+    const image = req.file.filename;
+    const editQuery = `update products set  title='${title}', description='${description}', image='${image}', price=${price} where id = ${id}`;
+    db.query(editQuery, (error, data) => {
+      if (error) return res.json(error);
+      else return res.json(data);
+    });
+  } catch (error) {
+    const editQuery = `update products set  title='${title}', description='${description}', price=${price} where id = ${id}`;
+    db.query(editQuery, (error, data) => {
+      if (error) return res.json(error);
+      else return res.json(data);
+    });
+  }
+});
+
 app.post("/api/changepassword", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -248,6 +300,16 @@ app.delete("/api/deletepost", (req, res) => {
   const id = req.body.id;
 
   const deleteQuery = `delete from posts where id = ${id}`;
+  db.query(deleteQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.delete("/api/deleteproduct", (req, res) => {
+  const id = req.body.id;
+
+  const deleteQuery = `delete from products where id = ${id}`;
   db.query(deleteQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
