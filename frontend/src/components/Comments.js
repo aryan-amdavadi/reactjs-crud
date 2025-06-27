@@ -11,18 +11,24 @@ function Comments(props) {
   const [empData, setEmpData] = useState();
 
   useEffect(() => {
-    axios.get("http://localhost:8081/comments").then((res) => {
-      const filteredComments = res.data.filter(
-        (comment) => comment.post_id === props.postID
-      );
-      setData(filteredComments);
-    }).catch((err) => console.log(err));
+    axios
+      .get("http://localhost:8081/comments")
+      .then((res) => {
+        const filteredComments = res.data.filter(
+          (comment) => comment.post_id === props.postID
+        );
+        setData(filteredComments);
+      })
+      .catch((err) => console.log(err));
   }, [props.postID]);
 
   useEffect(() => {
-    axios.get("http://localhost:8081/users").then((res) => {
-      setEmpData(res.data);
-    }).catch((err) => console.log(err));
+    axios
+      .get("http://localhost:8081/users")
+      .then((res) => {
+        setEmpData(res.data);
+      })
+      .catch((err) => console.log(err));
   }, []);
 
   const handleComment = () => {
@@ -31,7 +37,8 @@ function Comments(props) {
       post_id: props.postID,
       user_id: localStorage.getItem("user_id"),
     };
-    axios.post("http://localhost:8081/api/addcomment", dataObject)
+    axios
+      .post("http://localhost:8081/api/addcomment", dataObject)
       .then(() => {
         setCommentValue("");
         fetchComments();
@@ -59,9 +66,9 @@ function Comments(props) {
 
   const handleSaveEdit = (commentId) => {
     const dataObject = {
-      comment_id:commentId,
-      comment:editCommentText
-    }
+      comment_id: commentId,
+      comment: editCommentText,
+    };
     axios
       .post("http://localhost:8081/api/editcomment", dataObject)
       .then((responce) => {
@@ -69,7 +76,7 @@ function Comments(props) {
         setEditCommentId(null);
         setEditCommentText("");
         fetchComments();
-      })  
+      })
       .catch((error) => {
         console.log(error);
       });
@@ -89,72 +96,105 @@ function Comments(props) {
       .catch((error) => {
         console.log(error);
       });
-    
-  }
+  };
   return (
-    <div className="card details-card">
-      <div className="tags-box d-flex">
-        <input
-          type="text"
-          placeholder="Comment...."
-          value={commentValue}
-          onChange={(e) => {
-            setCommentValue(e.target.value);
-            setCommentClose(e.target.value === "");
-          }}
-        />
-        <button className="btn btn-primary mx-3" disabled={commentClose} onClick={handleComment}>Add</button>
-      </div>
-      <div className="history">
-        <h2>Comments:</h2>
-        {data.map((comment) => {
-          const isEditing = editCommentId === comment.comment_id;
-          const user = empData && empData.find((user) => user.Emp_Id === comment.user_id);
-          const isCommentAdmin = user && user.role === "admin";
-          return (
-            <div key={comment.comment_id} className="d-flex" style={{ justifyContent: "space-between" }}>
-              <div className="note">
-                <span>{comment.date}</span>
-                <p>
-                  <p className={isCommentAdmin ? "admin-comment" :""}>
-                    {isCommentAdmin ? "Admin " : ""}
-                  </p>
-                  <strong>
-                    {user ? user.First_Name : "Unknown "}
-                  </strong>
-                  {" : "}
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editCommentText}
-                      onChange={handleEditCommentTextChange}
-                      style={{ border: "1px solid #ccc" }}
-                    />
-                  ) : (
-                    comment.comment
-                  )}
-                </p>
-              </div>
+    <div className="comment-section" style={{width:"717px", background:"transparent"}}>
+      <div className="card details-card" style={{width:"669PX"}}>
+        <div className="tags-box d-flex">
+          <input
+            type="text"
+            placeholder="Comment...."
+            value={commentValue}
+            onChange={(e) => {
+              setCommentValue(e.target.value);
+              setCommentClose(e.target.value === "");
+            }}
+          />
+          <button
+            className="btn btn-primary mx-3"
+            disabled={commentClose}
+            onClick={handleComment}
+          >
+            Add
+          </button>
+        </div>
+        <div className="history">
+          <h2>Comments:</h2>
+          {data.map((comment) => {
+            const isEditing = editCommentId === comment.comment_id;
+            const user =
+              empData &&
+              empData.find((user) => user.Emp_Id === comment.user_id);
+            const isCommentAdmin = user && user.role === "admin";
+            return (
               <div
-                id="actions"
-                style={{ display: Number(localStorage.getItem("user_id")) === Number(comment.user_id) || localStorage.getItem("role")==="admin" ? "block" : "none" }}
+                key={comment.comment_id}
+                className="d-flex"
+                style={{ justifyContent: "space-between" }}
               >
-                {isEditing ? (
-                  <button className="btn btn-sm mx-1" onClick={() => handleSaveEdit(comment.comment_id)} >
-                    <i className="fa-solid fa-check"></i>
+                <div className="note" style={{backgroundColor:"#3f503c"}}>
+                  <span>{comment.date}</span>
+                  <p>
+                    <p style={{backgroundColor:isCommentAdmin?"#f0f9f4":"",borderLeft:isCommentAdmin?"4px solid #2e5939":""}}>
+                      {isCommentAdmin ? "Admin " : ""}
+                    </p>
+                    <strong>{user ? user.First_Name : "Unknown "}</strong>
+                    {" : "}
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editCommentText}
+                        onChange={handleEditCommentTextChange}
+                        style={{ border: "1px solid #ccc" }}
+                      />
+                    ) : (
+                      comment.comment
+                    )}
+                  </p>
+                </div>
+                <div
+                  id="actions"
+                  style={{
+                    display:
+                      Number(localStorage.getItem("user_id")) ===
+                        Number(comment.user_id) ||
+                      localStorage.getItem("role") === "admin"
+                        ? "block"
+                        : "none",
+                  }}
+                >
+                  {isEditing ? (
+                    <button
+                      className="btn btn-sm mx-1"
+                      onClick={() => handleSaveEdit(comment.comment_id)}
+                    >
+                      <i className="fa-solid fa-check"></i>
+                    </button>
+                  ) : (
+                    <button
+                      className="edit mx-1 btn btn-link"
+                      onClick={() => handleEditButtonClick(comment)}
+                    >
+                      <i className="material-icons" title="Edit">
+                        &#xE254;
+                      </i>
+                    </button>
+                  )}
+                  <button
+                    className="delete mx-1 btn btn-link"
+                    onClick={() => {
+                      handleDelete(comment.comment_id);
+                    }}
+                  >
+                    <i className="material-icons" title="Delete">
+                      &#xE872;
+                    </i>
                   </button>
-                ) : (
-                  <button className="edit mx-1 btn btn-link" onClick={() => handleEditButtonClick(comment)}>
-                    <i className="material-icons" title="Edit">&#xE254;</i>
-                  </button>
-                )}
-                <button className="delete mx-1 btn btn-link" onClick={() => {handleDelete(comment.comment_id)}}>
-                  <i className="material-icons" title="Delete">&#xE872;</i>
-                </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

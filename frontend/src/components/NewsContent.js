@@ -132,7 +132,7 @@ function NewsContent(props) {
     <>
     <div>
       <table
-        className="table table-striped table-hover"
+        className="table table-striped table-hover table-animated"
         style={
           !props.show
             ? { display: "none", width: "100%" }

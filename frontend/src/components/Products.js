@@ -1,59 +1,46 @@
-import React from 'react'
-
+import React, { useEffect, useState } from "react";
+import Navbar from "./Navbar";
+import axios from "axios";
 
 function Products() {
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    axios
+      .get("http://localhost:8081/products")
+      .then((res) => {
+        setData(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
   return (
-  <div className="container">
-    <div className="card">
-      <div className="card-img">
-        <img src="butter-caramel.png" alt="Butter Caramel Pecan" />
-        <span className="badge">70g</span>
-        <span className="badge">70g</span>
+    <>
+    
+      <Navbar />
+      <div className="container">
+        {data.map((data, i) => (
+          <div className="card">
+            <div className="card-img">
+              <h5>{data.title}</h5>
+              <img
+                src={`http://localhost:8081/images/${data.image}`}
+                alt="Butter Caramel Pecan"
+                height={100}
+                width={100}
+              />
+              <span className="badge">Sale</span>
+            </div>
+            <br />
+            <h3>{data.description}</h3>
+            <div className="nutrition"></div>
+            <p className="price">${data.price}</p>
+            <button className="btn">🛒 ADD TO CART</button>
+          </div>
+        ))}
       </div>
-      <h3>Loco Love Butter Caramel Pecan with Cinnamon Spice Twin Pack</h3>
-      <div className="nutrition">
-        <div><span>Calories</span><br />0cal</div>
-        <div><span>Protein</span><br />0g</div>
-        <div><span>Carbs</span><br />0g</div>
-        <div><span>Fat</span><br />0g</div>
-      </div>
-      <p className="price">$12.50</p>
-      <button className="btn">🛒 ADD TO CART</button>
-    </div>
-
-    <div className="card">
-      <div className="card-img">
-        <img src="almond-caramel.png" alt="Almond Caramel Crunch" />
-        <span className="badge">70g</span>
-      </div>
-      <h3>Loco Love Almond Caramel Crunch with Astragalus Root Twin Pack</h3>
-      <div className="nutrition">
-        <div><span>Calories</span><br />0cal</div>
-        <div><span>Protein</span><br />0g</div>
-        <div><span>Carbs</span><br />0g</div>
-        <div><span>Fat</span><br />0g</div>
-      </div>
-      <p className="price">$12.50</p>
-      <button className="btn">🛒 ADD TO CART</button>
-    </div>
-
-    <div className="card">
-      <div className="card-img">
-        <img src="peanut-butter.png" alt="Peanut Butter Caramel" />
-        <span className="badge">70g</span>
-      </div>
-      <h3>Loco Love Peanut Butter Caramel with Tremella Mushroom Twin Pack</h3>
-      <div className="nutrition">
-        <div><span>Calories</span><br />0cal</div>
-        <div><span>Protein</span><br />0g</div>
-        <div><span>Carbs</span><br />0g</div>
-        <div><span>Fat</span><br />0g</div>
-      </div>
-      <p className="price">$12.50</p>
-      <button className="btn">🛒 ADD TO CART</button>
-    </div>
-  </div>
-)
+    </>
+  );
 }
 
-export default Products
+export default Products;

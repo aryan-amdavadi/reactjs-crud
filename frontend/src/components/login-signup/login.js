@@ -7,6 +7,7 @@ import ModalFooter from "react-bootstrap/esm/ModalFooter";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import ForgotPass from "./ForgotPass";
+import Navbar from "../Navbar"
 
 const AuthForm = () => {
   localStorage.removeItem("role")
@@ -69,6 +70,7 @@ const AuthForm = () => {
 
   return (
     <>
+    <Navbar />
       <Modal show={modalImageOpen} style={{ backgroundColor: "transparent" }}>
         <ModalBody style={{ backgroundColor: "#324b55" }}>
           <img src={image} alt="Preview" height={400} width={460} />
@@ -400,7 +402,7 @@ const AuthForm = () => {
                     <button
                       type="button"
                       className="btn btn-outline-danger"
-                      style={{ backgroundColor: "transparent", border: "none" }}
+                      style={{ backgroundColor: "transparent", border: "none", color:"red" }}
                       onClick={() => {
                         setForgotPassOpen(true);
                       }}

@@ -27,20 +27,20 @@ function ForgotPass({ show, onClose }) {
             className="d-flex"
             style={{ flexDirection: "row-reverse", cursor: "pointer" }}
           >
-            <div
+            {/* <div
               style={{
                 background: "transparent",
                 color: "white",
                 border: "none",
                 fontSize: "60px",
                 position: "fixed",
-                top: 0,
+                top: "60px",
                 right: "20px",
               }}
               onClick={onClose}
             >
               <i className="fa-solid fa-xmark"></i>
-            </div>
+            </div> */}
           </div>
           <div className="auth-card">
             <div className="mb-3">

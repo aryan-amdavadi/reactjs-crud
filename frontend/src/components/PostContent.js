@@ -137,7 +137,7 @@ function PostContent(props) {
   return (
     <>
       <table
-        className="table table-striped table-hover"
+        className="table table-striped table-hover table-animated"
         style={!props.show ? { display: "none" } : { display: "inline-table" }}
       >
         <thead>
