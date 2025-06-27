@@ -160,7 +160,7 @@ function NewsContent(props) {
               <td>{data.First_Name}</td>
               <td>{data.Last_Name}</td>
               <td>{data.Email}</td>
-              <th>{data.Phone_No}</th>
+              <td>{data.Phone_No}</td>
               <td>{data.Gender}</td>
               <td>{Object.values(JSON.parse(data.Hobbies)) + " "}</td>
               <td>{data.Status}</td>

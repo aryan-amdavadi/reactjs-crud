@@ -12,7 +12,6 @@ function BasicExample() {
       style={{ paddingLeft: "0", paddingRight: "0", background:"transparent" }}
     >
       <Container style={{ margin: "15px" }}>
-        <Link className="btn btn-light mx-2" style={{fontSize:"larger", background:"transparent" }}>MyStudents Data</Link>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <div style={{

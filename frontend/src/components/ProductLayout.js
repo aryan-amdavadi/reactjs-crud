@@ -4,6 +4,7 @@ import axios from "axios";
 import Modal from "react-bootstrap/Modal";
 import ProductContent from "./ProductContent";
 
+
 function ProductLayout() {
   const [tableOpen, setTableOpen] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -65,7 +66,7 @@ function ProductLayout() {
                     style={{ flexDirection: "row-reverse" }}
                   >
                     <button
-                      style={{ height: "38px" }}
+                      style={{ width:"145px" }}
                       className="btn btn-success mx-3"
                       onClick={() => {
                         setModalOpen(true);

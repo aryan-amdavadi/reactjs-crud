@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./style.css";
+
 import axios from "axios";
 
 function Comments(props) {
@@ -109,20 +109,18 @@ function Comments(props) {
         <h2>Comments:</h2>
         {data.map((comment) => {
           const isEditing = editCommentId === comment.comment_id;
+          const user = empData && empData.find((user) => user.Emp_Id === comment.user_id);
+          const isCommentAdmin = user && user.role === "admin";
           return (
             <div key={comment.comment_id} className="d-flex" style={{ justifyContent: "space-between" }}>
               <div className="note">
                 <span>{comment.date}</span>
                 <p>
+                  <p className={isCommentAdmin ? "admin-comment" :""}>
+                    {isCommentAdmin ? "Admin " : ""}
+                  </p>
                   <strong>
-                    {empData && empData.find((user) => user.Emp_Id === comment.user_id)
-                      ? empData.find((user) => user.Emp_Id === comment.user_id).role === "admin" ? "Admin => " : ""
-                      : "Unknown"}
-                  </strong>
-                  <strong>
-                    {empData && empData.find((user) => user.Emp_Id === comment.user_id)
-                      ? empData.find((user) => user.Emp_Id === comment.user_id).First_Name
-                      : "Unknown"}
+                    {user ? user.First_Name : "Unknown "}
                   </strong>
                   {" : "}
                   {isEditing ? (
@@ -142,7 +140,7 @@ function Comments(props) {
                 style={{ display: Number(localStorage.getItem("user_id")) === Number(comment.user_id) || localStorage.getItem("role")==="admin" ? "block" : "none" }}
               >
                 {isEditing ? (
-                  <button className="btn btn-sm mx-1" onClick={() => handleSaveEdit(comment.comment_id)} style={{color:"#007bff", width:"50px", height:"44px", fontSize:"25px"}}>
+                  <button className="btn btn-sm mx-1" onClick={() => handleSaveEdit(comment.comment_id)} >
                     <i className="fa-solid fa-check"></i>
                   </button>
                 ) : (

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Modal from "react-bootstrap/Modal";
-import "./style.css";
 import ModalBody from "react-bootstrap/esm/ModalBody";
 import Comments from "./Comments";
 

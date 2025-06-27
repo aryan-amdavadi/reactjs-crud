@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import "./login.css"; // Import external CSS
+import './theme.css';
+
 import Modal from "react-bootstrap/Modal";
 import ModalBody from "react-bootstrap/esm/ModalBody";
 import ModalFooter from "react-bootstrap/esm/ModalFooter";
@@ -227,7 +228,7 @@ const AuthForm = () => {
                   className="d-flex"
                   style={{ justifyContent: "end", flexDirection: "column" }}
                 >
-                  <div className="d-flex" style={{ justifyContent: "start" }}>
+                  <div className="d-flex" style={{ justifyContent: "center" }}>
                     <label
                       htmlFor="exampleFormControlInput1"
                       className="form-label"
@@ -237,7 +238,7 @@ const AuthForm = () => {
                   </div>
                   <div
                     style={{ display: "block" }}
-                    className="btn-group mb-3"
+                    className="btn-group mb-3 d-flex"
                     role="group"
                     aria-label="Basic radio toggle button group"
                   >
@@ -257,7 +258,7 @@ const AuthForm = () => {
                       htmlFor="male"
                       style={{
                         borderRadius: "5px",
-                        width: "60px",
+                        width: "245px",
                         backgroundColor: gender === "Male" ? "green" : "",
                         color: gender === "Male" ? "white" : "",
                       }}
@@ -286,6 +287,7 @@ const AuthForm = () => {
                       htmlFor="female"
                       style={{
                         borderRadius: "5px",
+                        width:"245px",
                         backgroundColor: gender === "Female" ? "green" : "",
                         color: gender === "Female" ? "white" : "",
                       }}

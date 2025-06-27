@@ -1,4 +1,6 @@
 import axios from "axios";
+import './theme.css';
+
 
 function ForgotPass({ show, onClose }) {
   

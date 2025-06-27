@@ -3,6 +3,8 @@ import PostContent from "./PostContent";
 import Modal from "react-bootstrap/Modal";
 import axios from "axios";
 import Navbar from "./Navbar";
+
+
 import { useNavigate } from 'react-router-dom';
 
 function PostLayout() {
@@ -97,7 +99,7 @@ function PostLayout() {
                     style={{ flexDirection: "row-reverse" }}
                   >
                     <button
-                      style={{ height: "38px" }}
+                      style={{width:"145px"}}
                       className="btn btn-success mx-3"
                       onClick={() => {
                         setModalOpen(true);

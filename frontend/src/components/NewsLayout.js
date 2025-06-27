@@ -77,7 +77,7 @@ function NewsLayout() {
                   >
                     <button
                       to="addemployee"
-                      style={{ height: "38px" }}
+                      style={{ width:"145px" }}
                       className="btn btn-success mx-3"
                       onClick={handleOpen}
                       data-toggle="modal"

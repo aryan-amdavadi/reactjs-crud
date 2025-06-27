@@ -5,6 +5,7 @@ import PostLayout from "./components/PostLayout";
 import Demo from "./components/login-signup/login";
 import ResetPassword from "./components/login-signup/ResetPassword";
 import ProductLayout from "./components/ProductLayout";
+import Products from "./components/Products";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/posts" element={<PostLayout />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
           <Route path="/products" element={<ProductLayout />} />
+          <Route path="/productsview" element={<Products />} />
         </Routes>
       </Router>
     </>
