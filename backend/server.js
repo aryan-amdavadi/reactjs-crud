@@ -125,10 +125,15 @@ app.post('/postowner', (req, res) => {
   });
 });
 
-
 //Get Products
 app.get('/products', (req, res) => {
   const sql = 'select * from products';
+  db.query(sql, (error, data) => (error ? res.status(500).json(error) : res.json(data)));
+});
+
+//Get Cart
+app.get('/carts', (req, res) => {
+  const sql = 'select * from carts';
   db.query(sql, (error, data) => (error ? res.status(500).json(error) : res.json(data)));
 });
 
@@ -191,6 +196,20 @@ app.post("/api/addproduct", upload.single("image"), (req, res) => {
   const image = req.file.filename;
   const price = req.body.price;
   const addQuery = `insert into products (title, description,price, image) values('${title}','${description}',${price},'${image}')`;
+  db.query(addQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/api/addcart", (req, res) => {
+  //req.file => Image Details
+  //req.body => Body Details
+  const user_id = req.body.user_id;
+  const product_id = req.body.id;
+  const quantity = req.body.quantity;
+  const price = req.body.price;
+  const addQuery = `insert into carts (user_id, product_id,price, quantity) values(${user_id},${product_id},${price},${quantity})`;
   db.query(addQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
@@ -273,6 +292,18 @@ app.post("/api/editproduct", upload.single("image"), (req, res) => {
       else return res.json(data);
     });
   }
+});
+
+app.post("/api/quantity", (req, res) => {
+  const product_id = req.body.product_id;
+  const quantity = req.body.quantity;
+  const user_id = Number(req.body.user_id);
+  const editQuery = `update carts set quantity=quantity+${quantity} where product_id = ${product_id} and user_id=${user_id}`;
+  db.query(editQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+  db.query("delete from carts where quantity=0")
 });
 
 app.post("/api/changepassword", (req, res) => {

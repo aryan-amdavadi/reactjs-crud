@@ -17,7 +17,7 @@ function HomePage() {
             Your one-stop shop for thoughtfully crafted products — beautifully
             designed, consciously sourced, and delivered with care.
           </p>
-          <Link className="cta-button" to="/menu">
+          <Link className="btn cta-button" to="/menu">
             Shop Now
           </Link>
         </section>

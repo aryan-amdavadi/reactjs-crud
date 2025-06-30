@@ -1,104 +1,71 @@
 import { useEffect, useState } from "react";
-import Container from "react-bootstrap/Container";
-import Nav from "react-bootstrap/Nav";
-import Navbar from "react-bootstrap/Navbar";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import CartPanel from "./Cart";
 
-function BasicExample() {
+function AppNavbar({ loadData, setLoadData }) {
   const [logeedIn, setLoggedIn] = useState(
     localStorage.getItem("user_id") !== null
   );
-  const [profiledata,setProfileData] = useState([]);
+  const [profiledata, setProfileData] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showCart, setShowCart] = useState(false);
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const closeDropdown = () => setDropdownOpen(false);
   useEffect(() => {
     const dataObject = {
-      user_id:localStorage.getItem("user_id")
-    }
-      axios
+      user_id: localStorage.getItem("user_id"),
+    };
+    axios
       .post("http://localhost:8081/postowner", dataObject)
       .then((res) => {
         setProfileData(res.data);
       })
       .catch((err) => {
-        console.log(err);
+        // console.log(err);
       });
-    }, []);
+  }, []);
   return (
     <>
-      <div
-        style={{
-          display: localStorage.getItem("role") === "admin" ? "flex" : "none",
+      <CartPanel
+        open={showCart}
+        onClose={() => setShowCart(false)}
+        onCartChange={() => {
+          setLoadData((prev) => prev + 1);
         }}
-      >
-        <Navbar
-          expand="lg"
-          className="bg-body-primary"
-          style={{
-            paddingLeft: "0",
-            paddingRight: "0",
-            background: "transparent",
-            width: "100%",
-          }}
-        >
-          <Container style={{ margin: "15px", padding: 0 }}>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="me-auto">
-                <Link className="btn btn-light mx-2" to="/">
-                  Home
-                </Link>
-              </Nav>
-              <Nav className="me-auto">
-                <Link className="btn btn-light mx-2" to="/menu">
-                  Shopping
-                </Link>
-              </Nav>
-              <Nav className="me-auto">
-                <Link className="btn btn-light mx-2" to="/users">
-                  Users
-                </Link>
-              </Nav>
-              <Nav className="me-auto">
-                <Link className="btn btn-light mx-2" to="/posts">
-                  Post
-                </Link>
-              </Nav>
-              <Nav className="me-auto">
-                <Link className="btn btn-light mx-2" to="/products">
-                  Products
-                </Link>
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
-        </Navbar>
-      </div>
-      <nav
-        className="navbar"
-        style={{
-          display:
-            localStorage.getItem("role") === "user" ||
-            localStorage.getItem("role") === null
-              ? "flex"
-              : "none",
-        }}
-      >
+      />
+      <nav className="navbar" style={{ zIndex: showCart ? -1 : 1 }}>
         <Link className="logo" to="/" style={{ textDecoration: "none" }}>
           Tabster
         </Link>
+        <div
+          style={{
+            display: localStorage.getItem("role") === "admin" ? "flex" : "none",
+          }}
+        >
+          <Link className="btn btn-light mx-2" to="/">
+            Home
+          </Link>
+          <Link className="btn btn-light mx-2" to="/menu">
+            Shopping
+          </Link>
+          <Link className="btn btn-light mx-2" to="/users">
+            Users
+          </Link>
+          <Link className="btn btn-light mx-2" to="/products">
+            Products
+          </Link>
+          <Link className="btn btn-light mx-2" to="/posts">
+            Post
+          </Link>
+        </div>
         <div className="nav-actions">
           <button
             className="nav-btn"
-            disabled={localStorage.getItem("user_id") === null}
-            style={{
-              cursor:
-                localStorage.getItem("user_id") === null
-                  ? "not-allowed"
-                  : "pointer",
+            onClick={() => {
+              setShowCart(true);
             }}
           >
             🛒 Cart
@@ -111,7 +78,7 @@ function BasicExample() {
             Sign In
           </Link>
           <div
-          style={{ display: logeedIn ? "block" : "none" }}
+            style={{ display: logeedIn ? "block" : "none" }}
             className="nav-btn profile-dropdown-wrapper"
             onClick={toggleDropdown}
             onMouseLeave={closeDropdown}
@@ -122,19 +89,15 @@ function BasicExample() {
                 <strong>
                   {profiledata.First_Name + profiledata.Last_Name || "..."}
                 </strong>
-                <small>
-                  {profiledata.Email || "..."}
-                </small>
-                <small>
-                  {profiledata.Phone_No || "..."}
-                </small>
+                <small>{profiledata.Email || "..."}</small>
+                <small>{profiledata.Phone_No || "..."}</small>
               </div>
               <hr />
               <button
                 className="logout-btn"
                 onClick={() => {
                   localStorage.clear();
-                  setLoggedIn(false)
+                  setLoggedIn(false);
                 }}
               >
                 Logout
@@ -147,4 +110,4 @@ function BasicExample() {
   );
 }
 
-export default BasicExample;
+export default AppNavbar;
