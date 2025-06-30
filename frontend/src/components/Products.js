@@ -20,7 +20,7 @@ function Products() {
       <Navbar />
       <div className="container">
         {data.map((data, i) => (
-          <div className="card">
+          <div className="card" key={i}>
             <div className="card-img">
               <h5>{data.title}</h5>
               <img

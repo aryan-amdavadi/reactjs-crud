@@ -125,6 +125,7 @@ app.post('/postowner', (req, res) => {
   });
 });
 
+
 //Get Products
 app.get('/products', (req, res) => {
   const sql = 'select * from products';

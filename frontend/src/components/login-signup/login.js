@@ -38,7 +38,7 @@ const AuthForm = () => {
         .then((res) => {
           localStorage.setItem("user_id", res.data.Emp_Id);
           localStorage.setItem("role", res.data.role);
-          navigate("/posts", { state: res.data });
+          navigate("/menu", { state: res.data });
         })
         .catch((err) => {
           console.log(err);
@@ -57,7 +57,7 @@ const AuthForm = () => {
         .post("http://localhost:8081/api/addemployee", formData)
         .then((responce) => {
           if (responce.data.code === undefined) {
-            navigate("/posts");
+            navigate("/menu");
           } else {
             setErrorModalShow(true);
           }
