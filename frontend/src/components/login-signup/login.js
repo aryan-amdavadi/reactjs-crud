@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import './theme.css';
+import "./theme.css";
 
 import Modal from "react-bootstrap/Modal";
 import ModalBody from "react-bootstrap/esm/ModalBody";
@@ -7,10 +7,10 @@ import ModalFooter from "react-bootstrap/esm/ModalFooter";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import ForgotPass from "./ForgotPass";
-import Navbar from "../Navbar"
+import Navbar from "../Navbar";
 
 const AuthForm = () => {
-  localStorage.removeItem("role")
+  localStorage.removeItem("role");
   localStorage.removeItem("user_id");
   const navigate = useNavigate();
   const [errorModalShow, setErrorModalShow] = useState(false);
@@ -39,6 +39,20 @@ const AuthForm = () => {
           localStorage.setItem("user_id", res.data.Emp_Id);
           localStorage.setItem("role", res.data.role);
           navigate("/menu", { state: res.data });
+          const localCart = JSON.parse(localStorage.getItem("cart")) || {};
+          let dummyCart = Object.values(localCart);
+          for (let i = 0; i < dummyCart.length; i++) {
+            dummyCart[i].user_id = localStorage.getItem("user_id");
+            axios
+              .post("http://localhost:8081/api/addcart", dummyCart[i])
+              .then((response) => {
+                console.log(response)
+                localStorage.removeItem("cart")
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+          }
         })
         .catch((err) => {
           console.log(err);
@@ -70,7 +84,7 @@ const AuthForm = () => {
 
   return (
     <>
-    <Navbar />
+      <Navbar />
       <Modal show={modalImageOpen} style={{ backgroundColor: "transparent" }}>
         <ModalBody style={{ backgroundColor: "#324b55" }}>
           <img src={image} alt="Preview" height={400} width={460} />
@@ -109,12 +123,15 @@ const AuthForm = () => {
           </button>
         </ModalFooter>
       </Modal>
-      <ForgotPass show={forgotPassOpen} onClose={() => setForgotPassOpen(false)} />
-      <div className="auth-wrapper" style={{ display: forgotPassOpen ? "none" : "flex" }}>
-        <div
-          className="auth-card"
-          
-        >
+      <ForgotPass
+        show={forgotPassOpen}
+        onClose={() => setForgotPassOpen(false)}
+      />
+      <div
+        className="auth-wrapper"
+        style={{ display: forgotPassOpen ? "none" : "flex" }}
+      >
+        <div className="auth-card">
           <div className="auth-tabs">
             <button
               className={`auth-tab ${isLogin ? "active" : ""}`}
@@ -220,8 +237,6 @@ const AuthForm = () => {
                     className="form-control"
                     id="Password"
                     name="password"
-                    // value={formData.password}
-                    // onChange={handleChange}
                     placeholder="Password"
                     required
                   />
@@ -289,7 +304,7 @@ const AuthForm = () => {
                       htmlFor="female"
                       style={{
                         borderRadius: "5px",
-                        width:"245px",
+                        width: "245px",
                         backgroundColor: gender === "Female" ? "green" : "",
                         color: gender === "Female" ? "white" : "",
                       }}
@@ -356,7 +371,6 @@ const AuthForm = () => {
                   >
                     Preview
                   </button>
-                  {/* <img src={image} alt="Preview" height={200} width={200} /> */}
                 </div>
               </div>
             )}
@@ -372,14 +386,12 @@ const AuthForm = () => {
                   <input
                     type="email"
                     className="form-control"
-                    // value={formData.email}
-                    // onChange={handleChange}
                     name="email"
                     placeholder="Email Address"
                     required
                   />
                 </div>
-                <div style={{ margin: "2px" }}>
+                <div style={{ margin: "2px", height:"68px" }}>
                   <label
                     htmlFor="exampleFormControlInput1"
                     className="form-label"
@@ -391,18 +403,21 @@ const AuthForm = () => {
                     className="form-control"
                     id="Password"
                     name="password"
-                    // value={formData.password}
-                    // onChange={handleChange}
                     placeholder="Password"
                     required
                   />
                 </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <div>
+                <div className="form-group" style={{ margin: 0 
+                }}>
+                  <div style={{display:"flex",justifyContent:"end"}}>
                     <button
                       type="button"
-                      className="btn btn-outline-danger"
-                      style={{ backgroundColor: "transparent", border: "none", color:"red" }}
+                      className="btn btn-outline-danger no-focus"
+                      style={{
+                        backgroundColor: "transparent",
+                        border: "none",
+                        color: "red",
+                      }}
                       onClick={() => {
                         setForgotPassOpen(true);
                       }}

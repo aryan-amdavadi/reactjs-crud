@@ -12,7 +12,6 @@ function App() {
   return (
     <>
       <Router>
-        
         <Routes>
           <Route path="/login-signup" element={<AuthForm />} />
           <Route path="/users" element={<NewsLayout />} />

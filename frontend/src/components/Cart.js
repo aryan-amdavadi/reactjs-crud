@@ -1,16 +1,29 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import CheckoutPanel from "./CheckoutPanel";
+// import { useNavigate } from "react-router-dom";
+import CheckoutPage from "./SampleCheckOut";
 
 function CartPanel({ open, onClose, onCartChange }) {
+  // const navigate = useNavigate();
   const userId = localStorage.getItem("user_id");
   const [cartData, setCartData] = useState([]);
   const [productData, setProductData] = useState([]);
+  const [checkOutOpen, setCheckOutOpen] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [couponError, setCouponError] = useState("");
   const panelRef = useRef();
   useEffect(() => {
     if (userId) {
+      const userObject = {
+        user_id: userId,
+      };
       axios
-        .get("http://localhost:8081/carts")
-        .then((res) => setCartData(res.data))
+        .post("http://localhost:8081/carts", userObject)
+        .then((res) => {
+          setCartData(res.data);
+        })
         .catch((err) => console.log(err));
     } else {
       const localCart = JSON.parse(localStorage.getItem("cart")) || {};
@@ -63,29 +76,91 @@ function CartPanel({ open, onClose, onCartChange }) {
       .catch((error) => {
         console.log(error);
       });
-    axios
-      .get("http://localhost:8081/carts")
-      .then((res) => {
-        setCartData(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const userObject = {
+      user_id: userId,
+    };
+    setTimeout(() => {
+      axios
+        .post("http://localhost:8081/carts", userObject)
+        .then((res) => {
+          setCartData(res.data);
+        })
+        .catch((err) => console.log(err));
+    }, 1);
   };
   const totalPrice = cartData.reduce((total, item) => {
     return total + item.price * item.quantity;
   }, 0);
+  const handleClearCart = () => {
+    if (!userId) {
+      // Guest user
+      localStorage.removeItem("cart");
+      setCartData([]);
+      if (onCartChange) onCartChange();
+    } else {
+      // Logged-in user
+      axios
+        .delete("http://localhost:8081/api/clearcart", {
+          data: { user_id: Number(userId) },
+        })
+        .then(() => {
+          setCartData([]);
+          if (onCartChange) onCartChange();
+        })
+        .catch((err) => console.log(err));
+    }
+  };
+  const handleApplyCoupon = () => {
+    const trimmedCode = couponCode.trim().toUpperCase();
+
+    // Example: hardcoded coupon validation
+    if (trimmedCode === "TAB10") {
+      setDiscountPercent(10); // 10% discount
+      setCouponError("");
+    } else if (trimmedCode === "TAB20") {
+      setDiscountPercent(20); // 20% discount
+      setCouponError("");
+    } else {
+      setDiscountPercent(0);
+      setCouponError("Invalid coupon code.");
+    }
+  };
+  const discountedTotal = totalPrice - (totalPrice * discountPercent) / 100;
 
   return (
     <>
+      {/* {
+        <CheckoutPanel
+          isOpen={checkOutOpen}
+          onClose={() => {
+            setCheckoutOpen(false);
+            onClose();
+          }}
+          cartItems={cartData}
+          total={totalPrice}
+        />
+      } */}
+      {checkOutOpen && <CheckoutPage
+    cartItems={cartData}
+    total={totalPrice}
+    onBack={() => setCheckOutOpen(false)}
+  />}
       {open && <div className="cart-overlay" />}
-      <div className={`cart-panel ${open ? "open" : ""}`} ref={panelRef}>
+      <div
+        className={`cart-panel ${open ? "open" : ""}`}
+        style={{ display: open ? "flex" : "none" }}
+        ref={panelRef}
+      >
         <div className="cart-header">
           <h2>Your Cart</h2>
+          <button className="clear-cart-btn" onClick={handleClearCart}>
+            🗑️ Clear Cart
+          </button>
           <button className="close-btn" onClick={onClose}>
             ×
           </button>
         </div>
+
         <div className="cart-body">
           {cartData.map((item) => (
             <div className="cart-item" key={item.product_id || item.id}>
@@ -108,13 +183,61 @@ function CartPanel({ open, onClose, onCartChange }) {
             </div>
           ))}
         </div>
+        <div className="card-body" style={{ flex: "none" }}>
+          {" "}
+          <div
+            className="coupon-section d-flex"
+            style={{ flexDirection: "row" }}
+          >
+            <input
+              type="text"
+              placeholder="Enter coupon code"
+              value={couponCode}
+              style={{ width: "100%" }}
+              onChange={(e) => setCouponCode(e.target.value)}
+              className="coupon-input"
+            />
+            <button className="apply-coupon-btn" onClick={handleApplyCoupon}>
+              Apply
+            </button>
+          </div>
+          {couponError && (
+            <div className="coupon-error" style={{ marginLeft: "25px" }}>
+              {couponError}
+            </div>
+          )}
+          {discountPercent > 0 && (
+            <div className="coupon-success" style={{marginLeft: "25px"}}>
+              🎉 {discountPercent}% discount applied!
+            </div>
+          )}
+        </div>
+
         <div className="cart-footer">
           <div className="cart-total">
             <span>Total:</span>
-            <strong>₹{totalPrice.toFixed(2)}</strong>
+            {/* <strong>₹{totalPrice.toFixed(2)}</strong> */}
+            {discountPercent > 0 ? (
+              <>
+                <span style={{ textDecoration: "line-through", color: "#999" }}>
+                  ₹{totalPrice.toFixed(2)}
+                </span>{" "}
+                <strong style={{ color: "green" }}>
+                  ₹{discountedTotal.toFixed(2)}
+                </strong>
+              </>
+            ) : (
+              <strong>₹{totalPrice.toFixed(2)}</strong>
+            )}
           </div>
-          <button className="checkout-btn">
-            {userId ? "Proceed to Checkout" : "Login to Checkout"}
+          <button
+            className="checkout-btn"
+            onClick={() => {
+                setCheckOutOpen(true);
+                onClose();
+            }}
+          >
+            Proceed to Checkout
           </button>
         </div>
       </div>

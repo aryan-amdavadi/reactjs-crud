@@ -1,13 +1,38 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import CartPanel from "./Cart";
 
 function AppNavbar({ loadData, setLoadData }) {
-  const [logeedIn, setLoggedIn] = useState(
-    localStorage.getItem("user_id") !== null
-  );
+  const userId = localStorage.getItem("user_id");
+  const [quantity, setQuantity] = useState([]);
+  const navigate = useNavigate();
+  const [logeedIn, setLoggedIn] = useState(userId !== null);
+  useEffect(() => {
+    if (userId) {
+      const userObject = {
+        user_id: userId,
+      };
+      axios
+        .post("http://localhost:8081/carts", userObject)
+        .then((res) => {
+          const totalQuantity = Object.values(res.data).reduce(
+            (sum, item) => sum + item.quantity,
+            0
+          );
+          setQuantity(totalQuantity);
+        })
+        .catch((err) => console.log(err));
+    } else {
+      const localCart = JSON.parse(localStorage.getItem("cart")) || {};
+      const totalQuantity = Object.values(Object.values(localCart)).reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+      setQuantity(totalQuantity);
+    }
+  }, [userId, loadData]);
   const [profiledata, setProfileData] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showCart, setShowCart] = useState(false);
@@ -15,18 +40,20 @@ function AppNavbar({ loadData, setLoadData }) {
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const closeDropdown = () => setDropdownOpen(false);
   useEffect(() => {
-    const dataObject = {
-      user_id: localStorage.getItem("user_id"),
-    };
-    axios
-      .post("http://localhost:8081/postowner", dataObject)
-      .then((res) => {
-        setProfileData(res.data);
-      })
-      .catch((err) => {
-        // console.log(err);
-      });
-  }, []);
+    if (userId !== null) {
+      const dataObject = {
+        user_id: userId,
+      };
+      axios
+        .post("http://localhost:8081/postowner", dataObject)
+        .then((res) => {
+          setProfileData(res.data);
+        })
+        .catch((err) => {
+          // console.log(err);
+        });
+    }
+  }, [userId,loadData]);
   return (
     <>
       <CartPanel
@@ -69,6 +96,7 @@ function AppNavbar({ loadData, setLoadData }) {
             }}
           >
             🛒 Cart
+          {quantity > 0 && <span className="cart-badge themed">{quantity}</span>}
           </button>
           <Link
             className="nav-btn"
@@ -98,6 +126,7 @@ function AppNavbar({ loadData, setLoadData }) {
                 onClick={() => {
                   localStorage.clear();
                   setLoggedIn(false);
+                  navigate("/");
                 }}
               >
                 Logout
