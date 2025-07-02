@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import CheckoutPanel from "./CheckoutPanel";
+// import CheckoutPanel from "./CheckoutPanel";
 // import { useNavigate } from "react-router-dom";
 import CheckoutPage from "./SampleCheckOut";
 
