@@ -165,11 +165,10 @@ app.post("/api/addemployee", upload.single("image"), (req, res) => {
   const PhoneNo = Number(req.body.phone_number);
   const Gender = req.body.gender;
   const Hobbies = req.body.hobbies;
-  const Status = req.body.status;
   const Image = req.file.filename;
   const password = req.body.password;
-  const addQuery = `insert into emp (First_Name, Last_Name, Email, Phone_No, Gender, Hobbies, Status, Image,password) values('${FirstName}','${LastName}','${Email}',${PhoneNo},'${Gender}',
-    '${Hobbies}','${Status}','${Image}','${password}')`;
+  const addQuery = `insert into emp (First_Name, Last_Name, Email, Phone_No, Gender, Hobbies, Image,password) values('${FirstName}','${LastName}','${Email}',${PhoneNo},'${Gender}',
+    '${Hobbies}','${Image}','${password}')`;
   db.query(addQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
@@ -183,9 +182,8 @@ app.post("/api/addpost", upload.single("image"), (req, res) => {
   const title = req.body.title;
   const description = req.body.description;
   const image = req.file.filename;
-  const status = req.body.status;
   const emp_id = req.body.emp_id;
-  const addQuery = `insert into posts (user_id,emp_id, title, description, image, status) values(${user_id},${emp_id},'${title}','${description}','${image}','${status}')`;
+  const addQuery = `insert into posts (user_id,emp_id, title, description, image) values(${user_id},${emp_id},'${title}','${description}','${image}')`;
   db.query(addQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
@@ -231,31 +229,6 @@ app.post("/api/addcart", (req, res) => {
   });
 });
 
-// app.post("/api/addorder", (req, res) => {
-//   //req.file => Image Details
-//   //req.body => Body Details
-//   const user_id = req.body.user_id;
-//   const cart_items = req.body.cartItems;
-//   const shipping_address = req.body.shippingAddress;
-//   const delivery_notes = req.body.deliveryNotes;
-//   const payment_method = req.body.paymentMethod;
-//   const total = req.body.total;
-//   const addQuery = `insert into orders (user_id, shipping_address, delivery_notes, payment_method,amount_paid, total) values(${user_id},'${shipping_address}','${delivery_notes}','${payment_method}',${total},${total})`;
-//   db.query(addQuery, (error, data) => {
-//     if (error) return res.json(error);
-//     const insertedId = data.insertId;
-//     for (let i = 0; i < cart_items.length; i++) {
-//       const order_items_query = `insert into order_items (order_id, product_id, price, quantity) values(${insertedId}, ${cart_items[i].product_id}, ${cart_items[i].price}, ${cart_items[i].quantity})`;
-//       db.query(order_items_query, (err, orderItemsResult) => {
-//         if (err) return res.status(500).json({ error: err });
-//         return res.json({
-//           message: "Order and items inserted successfully"
-//         });
-//       });
-//     }
-//   });
-// });
-
 app.post("/api/addorder", (req, res) => {
   const {
     user_id,
@@ -267,7 +240,7 @@ app.post("/api/addorder", (req, res) => {
   } = req.body;
 
   const addOrderQuery = `
-    INSERT INTO orders (user_id, shipping_address, delivery_notes, payment_method, amount_paid, total)
+    INSERT INTO orders (user_id, shipping_address, delivery_notes, payment_method, product_price, amount_paid)
     VALUES (?, ?, ?, ?, ?, ?)
   `;
 
@@ -313,7 +286,13 @@ app.post("/api/addorder", (req, res) => {
               const clearCartQuery = `delete from carts where user_id = ${user_id}`;
               db.query(clearCartQuery, (clearErr) => {
                 if (clearErr) {
-                  return res.status(500).json({ success: false, error: "Failed to clear cart", detail: clearErr });
+                  return res
+                    .status(500)
+                    .json({
+                      success: false,
+                      error: "Failed to clear cart",
+                      detail: clearErr,
+                    });
                 }
                 return res.json({
                   message: "Order and items inserted successfully",
@@ -337,16 +316,15 @@ app.post("/api/editemployee", upload.single("image"), (req, res) => {
   const PhoneNo = Number(req.body.phone_number);
   const Gender = req.body.gender;
   const Hobbies = req.body.hobbies;
-  const Status = req.body.status;
   try {
     const Image = req.file.filename;
-    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}', Status='${Status}', Image='${Image}' where Emp_Id = ${EmpId}`;
+    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}', Image='${Image}' where Emp_Id = ${EmpId}`;
     db.query(editQuery, (error, data) => {
       if (error) return res.json(error);
       else return res.json(data);
     });
   } catch (error) {
-    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}', Status='${Status}' where Emp_Id = ${EmpId}`;
+    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}' where Emp_Id = ${EmpId}`;
     db.query(editQuery, (error, data) => {
       if (error) return res.json(error);
       else return res.json(data);
@@ -359,16 +337,15 @@ app.post("/api/editpost", upload.single("image"), (req, res) => {
   const user_id = req.body.user_id;
   const title = req.body.title;
   const description = req.body.description;
-  const status = req.body.status;
   try {
     const image = req.file.filename;
-    const editQuery = `update posts set user_id='${user_id}', title='${title}', description='${description}', image='${image}', status='${status}' where id = ${id}`;
+    const editQuery = `update posts set user_id='${user_id}', title='${title}', description='${description}', image='${image}' where id = ${id}`;
     db.query(editQuery, (error, data) => {
       if (error) return res.json(error);
       else return res.json(data);
     });
   } catch (error) {
-    const editQuery = `update posts set user_id='${user_id}', title='${title}', description='${description}', status='${status}' where id = ${id}`;
+    const editQuery = `update posts set user_id='${user_id}', title='${title}', description='${description}' where id = ${id}`;
     db.query(editQuery, (error, data) => {
       if (error) return res.json(error);
       else return res.json(data);

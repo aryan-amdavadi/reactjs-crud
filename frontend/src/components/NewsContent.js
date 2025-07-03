@@ -48,7 +48,6 @@ function NewsContent(props) {
     setLastName(data.Last_Name);
     setEmail(data.Email);
     setPhNo(data.Phone_No);
-    setStatus(data.Status);
     setGender(data.Gender);
   }
 
@@ -93,7 +92,6 @@ function NewsContent(props) {
   const [lastName, setLastName] = useState();
   const [email, setEmail] = useState();
   const [phNo, setPhNo] = useState();
-  const [status, setStatus] = useState();
   const [gender, setGender] = useState();
 
   //Edit Content NoData Puro
@@ -148,7 +146,6 @@ function NewsContent(props) {
             <th width="200px">Phone No.</th>
             <th width="200px">Gender</th>
             <th width="300px">Hobbies</th>
-            <th width="200px">Status</th>
             <th width="200px">Image</th>
             <th>Action</th>
           </tr>
@@ -163,7 +160,6 @@ function NewsContent(props) {
               <td>{data.Phone_No}</td>
               <td>{data.Gender}</td>
               <td>{Object.values(JSON.parse(data.Hobbies)) + " "}</td>
-              <td>{data.Status}</td>
               <td>
                 <img
                   src={`http://localhost:8081/images/${data.Image}`}
@@ -384,53 +380,6 @@ function NewsContent(props) {
                   <option value="Surfing">Surfing</option>
                   <option value="Running">Running</option>
                 </select>
-              </div>
-              <div className="my-2">
-                <div>
-                  <label
-                    htmlFor="exampleFormControlInput1"
-                    className="form-label my-1"
-                    required
-                  >
-                    Status
-                  </label>
-                </div>
-                <div className="d-flex">
-                  <div className="form-check mx-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      value={"Active"}
-                      checked={status === "Active" ? true : false}
-                      onChange={(e) => {
-                        setStatus(e.target.value);
-                      }}
-                      name="status"
-                      id="Status"
-                      required
-                    />
-                    <label className="form-check-label" htmlFor="radioDefault1">
-                      Active
-                    </label>
-                  </div>
-                  <div className="form-check mx-2">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      value={"UnActive"}
-                      checked={status === "UnActive" ? true : false}
-                      onChange={(e) => {
-                        setStatus(e.target.value);
-                      }}
-                      name="status"
-                      id="Status"
-                      required
-                    />
-                    <label className="form-check-label" htmlFor="radioDefault1">
-                      UnActive
-                    </label>
-                  </div>
-                </div>
               </div>
               <div className="mb-3 my-3" id="imageDiv">
                 <label htmlFor="formFile" className="form-label">

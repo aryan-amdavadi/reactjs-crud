@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-// import CheckoutPanel from "./CheckoutPanel";
-// import { useNavigate } from "react-router-dom";
-import CheckoutPage from "./SampleCheckOut";
+import { useNavigate } from "react-router-dom";
 
 function CartPanel({ open, onClose, onCartChange }) {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const userId = localStorage.getItem("user_id");
   const [cartData, setCartData] = useState([]);
   const [productData, setProductData] = useState([]);
-  const [checkOutOpen, setCheckOutOpen] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [discountPercent, setDiscountPercent] = useState(0);
   const [couponError, setCouponError] = useState("");
@@ -125,26 +122,21 @@ function CartPanel({ open, onClose, onCartChange }) {
       setCouponError("Invalid coupon code.");
     }
   };
+  const removeCoupon = () => {
+    // Clear coupon logic (example):
+    setCouponCode("");
+    setDiscountPercent(0);
+  };
+
   const discountedTotal = totalPrice - (totalPrice * discountPercent) / 100;
 
   return (
     <>
-      {/* {
-        <CheckoutPanel
-          isOpen={checkOutOpen}
-          onClose={() => {
-            setCheckoutOpen(false);
-            onClose();
-          }}
-          cartItems={cartData}
-          total={totalPrice}
-        />
-      } */}
-      {checkOutOpen && <CheckoutPage
+      {/* {checkOutOpen && <CheckoutPage
     cartItems={cartData}
     total={totalPrice}
     onBack={() => setCheckOutOpen(false)}
-  />}
+  />} */}
       {open && <div className="cart-overlay" />}
       <div
         className={`cart-panel ${open ? "open" : ""}`}
@@ -207,24 +199,52 @@ function CartPanel({ open, onClose, onCartChange }) {
             </div>
           )}
           {discountPercent > 0 && (
-            <div className="coupon-success" style={{marginLeft: "25px"}}>
+            <div className="coupon-success" style={{ marginLeft: "25px" }}>
               🎉 {discountPercent}% discount applied!
             </div>
           )}
         </div>
 
         <div className="cart-footer">
-          <div className="cart-total">
-            <span>Total:</span>
+          <div
+            className="cart-total"
+            style={{ flexDirection: "column-reverse" }}
+          >
             {/* <strong>₹{totalPrice.toFixed(2)}</strong> */}
             {discountPercent > 0 ? (
               <>
-                <span style={{ textDecoration: "line-through", color: "#999" }}>
-                  ₹{totalPrice.toFixed(2)}
-                </span>{" "}
-                <strong style={{ color: "green" }}>
-                  ₹{discountedTotal.toFixed(2)}
-                </strong>
+                <div className="price-table">
+                  <div className="price-row">
+                    <span className="price-label">Original Price</span>
+                    <span className="original-price">
+                      ₹{totalPrice.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="price-row discount-row">
+                    <span className="price-label">Discount</span>
+                    <div className="d-flex">
+                      <span className="discount-amount">
+                        – ₹{(totalPrice - discountedTotal).toFixed(2)}
+                      </span>
+                      <button
+                        className="remove-coupon-btn"
+                        onClick={removeCoupon}
+                      >
+                        ✖
+                      </button>
+                    </div>
+                  </div>
+                  <div className="price-row discount-row">
+                    <span className="price-label">Shipping Charges</span>
+                    <span className="discounted-price">₹ 0</span>
+                  </div>
+                  <div className="price-row total-row">
+                    <span className="price-label">Total Payable</span>
+                    <span className="discounted-price">
+                      ₹{discountedTotal.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
               </>
             ) : (
               <strong>₹{totalPrice.toFixed(2)}</strong>
@@ -233,8 +253,8 @@ function CartPanel({ open, onClose, onCartChange }) {
           <button
             className="checkout-btn"
             onClick={() => {
-                setCheckOutOpen(true);
-                onClose();
+              navigate("/checkout");
+              onClose();
             }}
           >
             Proceed to Checkout

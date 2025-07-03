@@ -117,8 +117,8 @@ function AppNavbar({ loadData, setLoadData }) {
                 <strong>
                   {profiledata.First_Name + profiledata.Last_Name || "..."}
                 </strong>
-                <small>{profiledata.Email || "..."}</small>
-                <small>{profiledata.Phone_No || "..."}</small>
+                <strong>{profiledata.Email || "..."}</strong>
+                <strong>{profiledata.Phone_No || "..."}</strong>
               </div>
               <hr />
               <button

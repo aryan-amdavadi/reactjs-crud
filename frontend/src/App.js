@@ -7,6 +7,7 @@ import ResetPassword from "./components/login-signup/ResetPassword";
 import ProductLayout from "./components/ProductLayout";
 import Products from "./components/Products";
 import HomePage from "./components/HomePage";
+import CheckoutPage from "./components/SampleCheckOut";
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
           <Route path="/resetpassword" element={<ResetPassword />} />
           <Route path="/products" element={<ProductLayout />} />
           <Route path="/menu" element={<Products />} />
-          <Route path="/" element={<HomePage />}/>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
       </Router>
     </>

@@ -1939,7 +1939,7 @@ input#tip:focus {
 }
 
 .checkout-container {
-  max-width: 1000px;
+  max-width: 1500px;
   margin: 0 auto;
   background: #ffffff;
   border-radius: 20px;
@@ -1986,7 +1986,7 @@ input#tip:focus {
 
 .section-title {
   font-size: 26px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   color: #0d2f24;
   font-weight: 600;
 }
@@ -1994,7 +1994,6 @@ input#tip:focus {
 .checkout-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
 }
 
 .input {
@@ -2004,6 +2003,8 @@ input#tip:focus {
   font-size: 15px;
   transition: all 0.3s ease;
   background-color: #fdfdfc;
+  color: #00c9a7;
+  margin-bottom: 22px;
 }
 
 .input:focus {
@@ -2036,7 +2037,9 @@ input#tip:focus {
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
+  height: 100%;
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  margin-right: 12px;
 }
 
 .submit-btn:hover {
@@ -2080,7 +2083,6 @@ input#tip:focus {
 }
 
 .back-btn {
-  margin-top: 30px;
   background: #e8f5e9;
   border: 2px solid #4caf50;
   color: #2e7d32;
@@ -2091,6 +2093,7 @@ input#tip:focus {
   font-size: 15px;
   transition: all 0.3s ease;
   align-self: flex-start;
+  height: 100%;
 }
 
 .back-btn:hover {
@@ -2124,7 +2127,6 @@ input#tip:focus {
   align-items: center;
   cursor: pointer;
   padding: 16px 20px;
-  background-color: #e9e6dc;
   border-radius: 12px;
   transition: background 0.3s ease;
 }
@@ -2154,7 +2156,7 @@ input#tip:focus {
   overflow: hidden;
   transition: max-height 0.4s ease, padding 0.3s ease;
   background: #fff;
-  border-top: 1px solid #ccc;
+  border: none;
   border-radius: 0 0 12px 12px;
 }
 
@@ -2167,4 +2169,78 @@ input#tip:focus {
   font-size: 14.5px;
   color: #2c3e3c;
   line-height: 1.5;
+}
+
+.price-table {
+  width: 100%;
+  max-width: 400px;
+  margin: 20px auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.price-row:last-child {
+  border-bottom: none;
+}
+
+.price-label {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.original-price {
+  font-weight: 500;
+}
+
+.discount-amount {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.discounted-price {
+  color: #90ee90;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.total-row {
+  margin-top: 10px;
+}
+.discount-row {
+  position: relative;
+}
+
+.discount-amount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.remove-coupon-btn {
+  background: none;
+  border: none;
+  margin-left: 4px;
+  background: #ff6b6b;
+  color: white;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.remove-coupon-btn:hover {
+  color: #002f6d;
+  transform: scale(1.1);
 }

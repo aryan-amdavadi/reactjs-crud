@@ -1,12 +1,14 @@
-import React from "react";
+import React, {useState} from "react";
 import Navbar from "./Navbar";
 import "./home.css";
 import { Link } from "react-router-dom";
 
 function HomePage() {
+  const [loadData, setLoadData] = useState(0);
   return (
     <>
-      <Navbar />
+      <Navbar loadData={loadData} setLoadData={setLoadData} />
+
       <div className="home">
         {/* HERO SECTION */}
         <section className="hero">
