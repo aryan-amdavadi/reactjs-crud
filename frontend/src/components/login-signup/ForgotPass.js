@@ -1,5 +1,4 @@
 import axios from "axios";
-import "./theme.css";
 
 function ForgotPass({ show, onClose }) {
   const handleSubmit = async (e) => {

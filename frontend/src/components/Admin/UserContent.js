@@ -234,7 +234,7 @@ function NewsContent(props) {
               </button>
             </div>
           </Modal.Header>
-          <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <form onSubmit={handleSubmit} encType="multipart/form-data" id="Details">
             <Modal.Body>
               <div className="mb-3">
                 <label

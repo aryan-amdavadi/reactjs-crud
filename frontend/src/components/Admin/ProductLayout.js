@@ -1,70 +1,37 @@
-import React, { useState, useEffect } from "react";
-import PostContent from "./PostContent";
-import Modal from "react-bootstrap/Modal";
+import React, { useState } from "react";
+import Navbar from "../Content/Navbar";
 import axios from "axios";
-import Navbar from "./Navbar";
+import Modal from "react-bootstrap/Modal";
+import ProductContent from "./ProductContent";
 
 
-import { useNavigate } from 'react-router-dom';
-
-function PostLayout() {
-  const navigate = useNavigate();
-  if(localStorage.getItem("user_id")===null){
-    navigate("/")
-  }
+function ProductLayout() {
   const [tableOpen, setTableOpen] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [empData, setEmpData] = useState({});
-  const [loggedIn, setLoggedIn] = useState(null);
   const [image, setImage] = useState();
-  //
-  //
-  //
-  //
-  useEffect(() => {
-    axios
-      .get("http://localhost:8081/users")
-      .then((res) => {
-        setEmpData(res.data);
-          for (let i = 0; i < empData.length; i++) {
-            if (res.data[i].Emp_Id === localStorage.getItem("user_id")) {
-              setLoggedIn(res.data[i]);
-            }
-          }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  //
-  //
-  //
-  //
-  const handleSubmit = (event) => {
-    setTableOpen(false);
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    formData.append("emp_id", localStorage.getItem("user_id"));
-    axios
-      .post("http://localhost:8081/api/addpost", formData)
-      .then((responce) => {
-        console.log("Responce :", responce.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-    setModalOpen(false);
-    setTimeout(() => {
-      setTableOpen(true);
-    }, 1);
-  };
   const handleImage = (e) => {
     document.getElementById("imagePreview").style.display = "block";
     setImage(URL.createObjectURL(e.target.files[0]));
     document.getElementById("imageDiv").style.display = "none";
   };
-
+  const handleSubmit = (e) => {
+    setTableOpen(false)
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    axios
+      .post("http://localhost:8081/api/addproduct", formData)
+      .then((responce) => {
+        console.log("Responce :", responce.data);
+        setTableOpen(true);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    setModalOpen(false);
+    setTimeout(()=>{
+      setTableOpen(true)
+    },1)
+  };
   return (
     <>
       <Navbar />
@@ -91,7 +58,7 @@ function PostLayout() {
                     style={{ width: "100%", maxWidth: "100%" }}
                   >
                     <h2>
-                      Manage <b>Posts</b>
+                      Manage <b>Products</b>
                     </h2>
                   </div>
                   <div
@@ -99,7 +66,7 @@ function PostLayout() {
                     style={{ flexDirection: "row-reverse" }}
                   >
                     <button
-                      style={{width:"145px"}}
+                      style={{ width:"145px" }}
                       className="btn btn-success mx-3"
                       onClick={() => {
                         setModalOpen(true);
@@ -107,18 +74,18 @@ function PostLayout() {
                       data-toggle="modal"
                     >
                       <i className="material-icons"></i>
-                      <span>Post Now!!</span>
+                      <span>Add Product</span>
                     </button>
                   </div>
                 </div>
               </div>
-              {<PostContent show={tableOpen} userData={loggedIn} />}
+              {<ProductContent show={tableOpen} />}
 
               {modalOpen && (
                 <Modal show={true}>
-                  <form onSubmit={handleSubmit} encType="multipart/form-data">
+                  <form onSubmit={handleSubmit} encType="multipart/form-data" id="details">
                     <Modal.Header>
-                      <div>Enter The Details To Add.</div>
+                      <div>Enter The Details Of Product</div>
                       <div>
                         <button
                           type="button"
@@ -128,24 +95,11 @@ function PostLayout() {
                           }}
                           className="btn btn-light"
                         >
-                          X
+                          <i className="fa-solid fa-x"></i>
                         </button>
                       </div>
                     </Modal.Header>
                     <Modal.Body>
-                      <div className="mb-3">
-                        <label htmlFor="User_Id" className="form-label">
-                          User Id
-                        </label>
-                        <input
-                          type="number"
-                          name="user_id"
-                          className="form-control"
-                          id="user_id"
-                          placeholder="User Id"
-                          required
-                        />
-                      </div>
                       <div className="mb-3">
                         <label htmlFor="Title" className="form-label">
                           Title
@@ -202,49 +156,21 @@ function PostLayout() {
                           width={200}
                         />
                       </div>
-                      <div className="my-2">
-                        <div>
-                          <label
-                            htmlFor="exampleFormControlInput1"
-                            className="form-label my-1"
-                          >
-                            Status
-                          </label>
-                        </div>
-                        <div className="d-flex">
-                          <div className="form-check mx-2">
-                            <input
-                              className="form-check-input"
-                              type="radio"
-                              value={"Active"}
-                              name="status"
-                              id="Status"
-                              required
-                            />
-                            <label
-                              className="form-check-label"
-                              htmlFor="radioDefault1"
-                            >
-                              Active
-                            </label>
-                          </div>
-                          <div className="form-check mx-2">
-                            <input
-                              className="form-check-input"
-                              type="radio"
-                              value={"UnActive"}
-                              name="status"
-                              id="Status"
-                              required
-                            />
-                            <label
-                              className="form-check-label"
-                              htmlFor="radioDefault1"
-                            >
-                              UnActive
-                            </label>
-                          </div>
-                        </div>
+                      <div className="mb-3">
+                        <label
+                          htmlFor="exampleFormControlInput1"
+                          className="form-label"
+                        >
+                          Price
+                        </label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          id="price"
+                          name="price"
+                          placeholder="Price"
+                          required
+                        />
                       </div>
                     </Modal.Body>
                     <Modal.Footer>
@@ -264,4 +190,4 @@ function PostLayout() {
   );
 }
 
-export default PostLayout;
+export default ProductLayout;

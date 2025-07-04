@@ -4,7 +4,7 @@ import axios from "axios";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import CartPanel from "./Cart";
 
-function AppNavbar({ loadData, setLoadData }) {
+function AppNavbar({ loadData, setLoadData,color}) {
   const userId = localStorage.getItem("user_id");
   const [quantity, setQuantity] = useState([]);
   const navigate = useNavigate();
@@ -63,8 +63,8 @@ function AppNavbar({ loadData, setLoadData }) {
           setLoadData((prev) => prev + 1);
         }}
       />
-      <nav className="navbar" style={{ zIndex: showCart ? -1 : 1 }}>
-        <Link className="logo" to="/" style={{ textDecoration: "none" }}>
+      <nav className="navbar" style={{ zIndex: showCart ? -1 : 1 , background:color}}>
+        <Link className="logo" to="/" style={{ textDecoration: "none", color:color?"#296b2a":""}}>
           Tabster
         </Link>
         <div
@@ -86,6 +86,9 @@ function AppNavbar({ loadData, setLoadData }) {
           </Link>
           <Link className="btn btn-light mx-2" to="/posts">
             Post
+          </Link>
+          <Link className="btn btn-light mx-2" to="/shipping">
+            Shipping
           </Link>
         </div>
         <div className="nav-actions">

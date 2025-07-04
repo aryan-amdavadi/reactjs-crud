@@ -8,8 +8,8 @@ const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
 
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const db = mysql.createConnection({
@@ -152,6 +152,26 @@ app.get("/products", (req, res) => {
   );
 });
 
+//Get Shipping Address
+app.get("/shipping", (req, res) => {
+  const sql = "select * from shipping_locations";
+  db.query(sql, (error, data) =>
+    error ? res.status(500).json(error) : res.json(data)
+  );
+});
+
+app.post("/timeframe", (req, res) => {
+  const { city, post_code } = req.body;
+  const sql =
+    "SELECT * FROM shipping_locations WHERE city = ? AND postcode = ?";
+  db.query(sql, [city, Number(post_code)], (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
 app.post("/upload", upload.single("image"), (req, res) => {
   const image = req.file.filename;
 });
@@ -215,6 +235,22 @@ app.post("/api/addproduct", upload.single("image"), (req, res) => {
   });
 });
 
+app.post("/api/addshipping", (req, res) => {
+  //req.file => Image Details
+  //req.body => Body Details
+  const name = req.body.name;
+  const city = req.body.city;
+  const post_code = Number(req.body.postCode);
+  const state = req.body.state;
+  const threshold = Number(req.body.threshold);
+  const shipping_fee = Number(req.body.shippingFee);
+  const addQuery = `insert into shipping_locations (name, city, postcode, state,shipping_threshold, shipping_cost) values('${name}','${city}',${post_code},'${state}',${threshold}, ${shipping_fee})`;
+  db.query(addQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
 app.post("/api/addcart", (req, res) => {
   //req.file => Image Details
   //req.body => Body Details
@@ -232,80 +268,77 @@ app.post("/api/addcart", (req, res) => {
 app.post("/api/addorder", (req, res) => {
   const {
     user_id,
-    cartItems,
-    shippingAddress,
-    deliveryNotes,
-    paymentMethod,
-    total,
+    user_details,
+    orderData,
+    discount_code,
+    amount_paid,
+    time_frame,
+    shipping_cost,
+    notes,
+    product_price,
   } = req.body;
-
+  const address = JSON.stringify;
   const addOrderQuery = `
-    INSERT INTO orders (user_id, shipping_address, delivery_notes, payment_method, product_price, amount_paid)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO orders (user_id, shipping_address, delivery_notes, shipping_method, shipping_cost, product_price, amount_paid)
+    VALUES (${user_id}, '${user_details}', '${notes}', '${time_frame}', ${shipping_cost}, ${product_price}, ${amount_paid})
   `;
 
-  db.query(
-    addOrderQuery,
-    [user_id, shippingAddress, deliveryNotes, paymentMethod, total, total],
-    (error, result) => {
-      if (error) return res.status(500).json({ error });
+  db.query(addOrderQuery, (error, result) => {
+    if (error) return res.status(500).json({ error });
 
-      const insertedOrderId = result.insertId;
+    const insertedOrderId = result.insertId;
 
-      // If no cart items, just return
-      if (cartItems.length === 0) {
-        return res.json({
-          message: "Order inserted (no items)",
-          order_id: insertedOrderId,
-        });
-      }
+    // If no cart items, just return
+    if (orderData.length === 0) {
+      return res.json({
+        message: "Order inserted (no items)",
+        order_id: insertedOrderId,
+      });
+    }
 
-      // Track how many inserts completed
-      let completedInserts = 0;
-      let hasError = false;
+    // Track how many inserts completed
+    let completedInserts = 0;
+    let hasError = false;
 
-      for (let i = 0; i < cartItems.length; i++) {
-        const item = cartItems[i];
-        const orderItemsQuery = `
+    for (let i = 0; i < orderData.length; i++) {
+      const item = orderData[i];
+      const orderItemsQuery = `
         INSERT INTO order_items (order_id, product_id, price, quantity)
         VALUES (?, ?, ?, ?)
       `;
-        db.query(
-          orderItemsQuery,
-          [insertedOrderId, item.product_id, item.price, item.quantity],
-          (err) => {
-            if (hasError) return;
-            if (err) {
-              hasError = true;
-              return res
-                .status(500)
-                .json({ error: "Failed to insert order items", detail: err });
-            }
-            completedInserts++;
-            if (completedInserts === cartItems.length) {
-              const clearCartQuery = `delete from carts where user_id = ${user_id}`;
-              db.query(clearCartQuery, (clearErr) => {
-                if (clearErr) {
-                  return res
-                    .status(500)
-                    .json({
-                      success: false,
-                      error: "Failed to clear cart",
-                      detail: clearErr,
-                    });
-                }
-                return res.json({
-                  message: "Order and items inserted successfully",
-                  order_id: insertedOrderId,
-                  total_items: completedInserts,
-                });
-              });
-            }
+      db.query(
+        orderItemsQuery,
+        [insertedOrderId, item.product_id, item.price, item.quantity],
+        (err) => {
+          if (hasError) return;
+          if (err) {
+            hasError = true;
+            return res
+              .status(500)
+              .json({ error: "Failed to insert order items", detail: err });
           }
-        );
-      }
+          completedInserts++;
+          if (completedInserts === orderData.length) {
+            const clearCartQuery = `delete from carts where user_id = ${user_id}`;
+            db.query(clearCartQuery, (clearErr) => {
+              if (clearErr) {
+                return res.status(500).json({
+                  success: false,
+                  error: "Failed to clear cart",
+                  detail: clearErr,
+                });
+              }
+              return res.json({
+                message: "Order and items inserted successfully",
+                order_id: insertedOrderId,
+                total_items: completedInserts,
+              });
+            });
+          }
+        }
+      );
     }
-  );
+  });
 });
 
 app.post("/api/editemployee", upload.single("image"), (req, res) => {
@@ -357,6 +390,21 @@ app.post("/api/editcomment", (req, res) => {
   const comment = req.body.comment;
   const comment_id = req.body.comment_id;
   const editQuery = `update comments set comment='${comment}' where comment_id = ${comment_id}`;
+  db.query(editQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/api/editshipping", (req, res) => {
+  const id = req.body.id;
+  const name = req.body.name;
+  const city = req.body.city;
+  const post_code = req.body.postCode;
+  const state = req.body.state;
+  const threshold = req.body.threshold;
+  const shipping_fee = req.body.shippingFee;
+  const editQuery = `update shipping_locations set name='${name}', city='${city}', postcode=${post_code}, state='${state}', shipping_threshold=${threshold}, shipping_cost=${shipping_fee} where id = ${id}`;
   db.query(editQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
@@ -441,6 +489,15 @@ app.delete("/api/deleteproduct", (req, res) => {
 app.delete("/api/deletecomment", (req, res) => {
   const comment_id = req.body.comment_id;
   const deleteQuery = `delete from comments where comment_id = ${comment_id}`;
+  db.query(deleteQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.delete("/api/deleteshipping", (req, res) => {
+  const id = req.body.id;
+  const deleteQuery = `delete from shipping_locations where id = ${id}`;
   db.query(deleteQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);

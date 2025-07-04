@@ -260,7 +260,7 @@ function PostContent(props) {
               </button>
             </div>
           </Modal.Header>
-          <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <form onSubmit={handleSubmit} encType="multipart/form-data" id="details">
             <Modal.Body>
               <div className="mb-3">
                 <label htmlFor="User_Id" className="form-label">

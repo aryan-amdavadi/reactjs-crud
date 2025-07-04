@@ -253,7 +253,12 @@ function CartPanel({ open, onClose, onCartChange }) {
           <button
             className="checkout-btn"
             onClick={() => {
-              navigate("/checkout");
+              navigate("/checkout", {
+                state:{
+                  couponCode:couponCode,
+                  amount:totalPrice - discountedTotal
+                }
+              });
               onClose();
             }}
           >

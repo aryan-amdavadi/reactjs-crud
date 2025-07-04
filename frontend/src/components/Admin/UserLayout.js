@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import NewsContent from "./NewsContent";
+import NewsContent from "./UserContent";
 import Modal from "react-bootstrap/Modal";
 import axios from "axios";
-import Navbar from "./Navbar"
+import Navbar from "../Content/Navbar"
 import { useNavigate } from 'react-router-dom';
 
 function NewsLayout() {
@@ -104,7 +104,7 @@ function NewsLayout() {
                       </button>
                     </div>
                   </Modal.Header>
-                  <form onSubmit={handleSubmit} encType="multipart/form-data">
+                  <form onSubmit={handleSubmit} encType="multipart/form-data" id="details">
                     <Modal.Body>
                       <div className="mb-3">
                         <label

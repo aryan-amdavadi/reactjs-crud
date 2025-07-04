@@ -1,7 +1,6 @@
 import React from "react";
 import { useEffect } from "react";
 import axios from "axios";
-import './theme.css';
 
 import { useNavigate } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";

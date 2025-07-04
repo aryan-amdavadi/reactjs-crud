@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "./theme.css";
 
 import Modal from "react-bootstrap/Modal";
 import ModalBody from "react-bootstrap/esm/ModalBody";
@@ -7,7 +6,7 @@ import ModalFooter from "react-bootstrap/esm/ModalFooter";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import ForgotPass from "./ForgotPass";
-import Navbar from "../Navbar";
+import Navbar from "../Content/Navbar";
 
 const AuthForm = () => {
   localStorage.removeItem("role");
@@ -147,7 +146,7 @@ const AuthForm = () => {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form onSubmit={handleSubmit} className="auth-form" id="login">
             {!isLogin && (
               <div>
                 <div
