@@ -127,6 +127,14 @@ function AppNavbar({ loadData, setLoadData,color}) {
               <button
                 className="logout-btn"
                 onClick={() => {
+                  navigate("/profile");
+                }}
+              >
+                Profile
+              </button>
+              <button
+                className="logout-btn"
+                onClick={() => {
                   localStorage.clear();
                   setLoggedIn(false);
                   navigate("/");
