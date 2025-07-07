@@ -10,6 +10,9 @@ import HomePage from "./components/Content/HomePage";
 import CheckoutPage from "./components/Content/Checkout";
 import ShippingLayout from "./components/Admin/ShippingLayout";
 import ProfilePage from "./components/Content/Profile";
+import OrderHistoryPage from "./components/Content/OrderHistory";
+import AddDiscountPage from "./components/Admin/DiscountAdd";
+import DiscountLayout from "./components/Admin/DiscountLayout"
 
 function App() {
   return (
@@ -26,6 +29,8 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/shipping" element={<ShippingLayout />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/history" element={<OrderHistoryPage />}/>
+          <Route path="/discount" element={<DiscountLayout />}/>
         </Routes>
       </Router>
     </>

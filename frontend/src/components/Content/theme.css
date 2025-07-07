@@ -807,7 +807,6 @@ body {
 h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
   margin-bottom: 16px;
   line-height: 1.4;
 }
@@ -2834,4 +2833,149 @@ HERO SECTION */ .hero {
 
 .form-select:disabled {
   background-color: #f8f8f8;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* order history */
+.order-history-container {
+  background: #f3f1e9;
+  min-height: 100vh;
+  padding: 60px 20px;
+  font-family: "Segoe UI", sans-serif;
+  color: #1b3b2f;
+}
+
+.order-title {
+  text-align: center;
+  font-size: 2.2rem;
+  color: #1b3b2f;
+  margin-bottom: 30px;
+}
+
+.no-orders {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.order-list {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.order-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+  border-left: 5px solid #3b5d50;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
+}
+
+.product-list {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #ccc;
+}
+
+.product-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+
+.order-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.order-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.view-details-btn {
+  background-color: #1b3b2f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background-color: #2d5242;
+}
+
+.order-details {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed #ccc;
 }

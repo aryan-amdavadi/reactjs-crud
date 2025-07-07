@@ -90,6 +90,9 @@ function AppNavbar({ loadData, setLoadData,color}) {
           <Link className="btn btn-light mx-2" to="/shipping">
             Shipping
           </Link>
+          <Link className="btn btn-light mx-2" to="/discount">
+            Discounts
+          </Link>
         </div>
         <div className="nav-actions">
           <button
@@ -124,6 +127,14 @@ function AppNavbar({ loadData, setLoadData,color}) {
                 <strong>{profiledata.Phone_No || "..."}</strong>
               </div>
               <hr />
+              <button
+                className="logout-btn"
+                onClick={() => {
+                  navigate("/history");
+                }}
+              >
+                Orders
+              </button>
               <button
                 className="logout-btn"
                 onClick={() => {

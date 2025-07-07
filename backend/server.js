@@ -160,6 +160,27 @@ app.get("/shipping", (req, res) => {
   );
 });
 
+//Get Discounts
+app.get("/discounts", (req, res) => {
+  const sql = "select * from discounts";
+  db.query(sql, (error, data) =>
+    error ? res.status(500).json(error) : res.json(data)
+  );
+});
+
+
+//Get Orders
+app.post("/api/orders", (req, res) => {
+  const { user_id } = req.body;
+  const sql = "SELECT * FROM orders WHERE user_id = ?";
+  db.query(sql, [Number(user_id)], (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
 app.post("/timeframe", (req, res) => {
   const { city, post_code } = req.body;
   const sql =
@@ -174,6 +195,84 @@ app.post("/timeframe", (req, res) => {
 
 app.post("/upload", upload.single("image"), (req, res) => {
   const image = req.file.filename;
+});
+
+app.post("/api/adddiscount", (req, res) => {
+  const {
+    discountCode,
+    discountType,
+    discountValue,
+    applicableProducts,
+    eligibleUsers,
+    requirementType,
+    requirementValue,
+    startDate,
+    endDate,
+    usageLimit,
+    onePerCustomer,
+    newCustomersOnly,
+    enabled,
+  } = req.body;
+
+  const productScope = Array.isArray(applicableProducts) ? "specific" : "all";
+  const userScope =
+    Array.isArray(eligibleUsers) && eligibleUsers.length > 0
+      ? "specific"
+      : "everyone";
+
+  const product_ids = productScope === "specific"
+    ? JSON.stringify(applicableProducts)
+    : null;
+
+  const user_ids = userScope === "specific"
+    ? JSON.stringify(eligibleUsers)
+    : null;
+
+  const sql = `
+    INSERT INTO discounts (
+      code,
+      type,
+      value,
+      product_scope,
+      product_ids,
+      user_scope,
+      user_ids,
+      requirement_type,
+      requirement_value,
+      start_date,
+      end_date,
+      usage_limit,
+      one_per_customer,
+      new_customers_only,
+      enabled
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  const values = [
+    discountCode,
+    discountType,
+    discountValue,
+    productScope,
+    product_ids,
+    userScope,
+    user_ids,
+    requirementType,
+    requirementValue,
+    startDate,
+    endDate || null,
+    usageLimit || null,
+    onePerCustomer,
+    newCustomersOnly,
+    enabled,
+  ];
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error("Error inserting discount:", err);
+      return res.status(500).json({ error: "Failed to insert discount." });
+    }
+    res.json({ message: "Discount created successfully.", discountId: result.insertId });
+  });
 });
 
 app.post("/api/addemployee", upload.single("image"), (req, res) => {
@@ -449,6 +548,24 @@ app.post("/api/changepassword", (req, res) => {
   const password = req.body.password;
   const editQuery = `update emp set password='${password}' where Email = '${email}'`;
   db.query(editQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/api/searchproduct", (req, res) => {
+  const keyword = req.body.keyword;  
+  const searchQuery = `SELECT id, title FROM products WHERE title like '%${keyword}%';`;
+  db.query(searchQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/api/searchuser", (req, res) => {
+  const keyword = req.body.keyword;
+  const searchQuery = `SELECT Emp_Id, First_Name, Last_Name FROM emp WHERE CONCAT(First_Name , Last_Name) like '%${keyword}%';`;
+  db.query(searchQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);
   });
