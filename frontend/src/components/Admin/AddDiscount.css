@@ -113,7 +113,6 @@ input[type="text"] {
   padding: 12px;
   border-radius: var(--border-radius);
   background: var(--glass-bg);
-  color: var(--text-primary);
   border: 1px solid #2c3e36;
   transition: border var(--transition-fast);
 }

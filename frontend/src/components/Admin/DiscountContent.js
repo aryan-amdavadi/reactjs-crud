@@ -3,59 +3,33 @@ import Modal from "react-bootstrap/Modal";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function DiscountContent(props) {
+function DiscountContent() {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [discountData, setDiscountData] = useState({});
-  const [modalOpen, setModalOpen] = useState(false);
+  const [inspectModalOpen, setInspectModalOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
-  const [id, setId] = useState();
-  const [shippingFee, setShippingFee] = useState("");
-  
-  const [name, setName] = useState("");
-  const [postCode, setPostCode] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [threshold, setThreshold] = useState("");
-  
   useEffect(() => {
-    if (props.show) {
-      axios
-        .get("http://localhost:8081/discounts")
-        .then((res) => {
-          console.log(res.data)
-          setData(res.data);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  }, [props.show]);
+    axios
+      .get("http://localhost:8081/discounts")
+      .then((res) => {
+        setData(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
 
-  const handleEdit = (data) => {
-    setId(data.id);
-    setDiscountData(data);
-    setShippingFee(data.shipping_cost);
-    setName(data.name);
-    setCity(data.city);
-    setPostCode(data.postcode);
-    setThreshold(data.shipping_threshold);
-    setState(data.state);
-  };
   const handleDelete = (data) => {
     setDiscountData(data);
   };
   const handleDeleteContent = () => {
-    const dataObject = {
-      id: discountData.id,
-    };
     axios
-      .delete("http://localhost:8081/api/deleteshipping", {
-        data: dataObject,
+      .delete("http://localhost:8081/api/deletediscount", {
+        data: { discount_id: discountData.id },
       })
       .then((responce) => {
         console.log("Responce :", responce.data);
-        navigate("/shipping");
       })
       .catch((error) => {
         console.log(error);
@@ -70,42 +44,14 @@ function DiscountContent(props) {
       });
     setModalDeleteOpen(false);
   };
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = {
-      name: e.target.name.value,
-      city: e.target.city.value,
-      postCode: e.target.postCode.value,
-      state: e.target.state.value,
-      threshold: e.target.threshold.value,
-      shippingFee: e.target.shippingFee.value,
-      id: id,
-    };
-    axios
-      .post("http://localhost:8081/api/editshipping", formData)
-      .then((res) => {
-        console.log("Response:", res.data)
-        navigate("/shipping");
-    })
-      .catch((err) => console.error("Error:", err));
-    setModalOpen(false);
-    axios
-      .get("http://localhost:8081/shipping")
-      .then((res) => {
-        setData(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-    
+
+  const handleInspect = (data) => {
+    setDiscountData(data);
   };
 
   return (
     <>
-      <table
-        className="table table-striped table-hover table-animated"
-        style={!props.show ? { display: "none" } : { display: "inline-table" }}
-      >
+      <table className="table table-striped table-hover table-animated">
         <thead>
           <tr>
             <th width="100px">Id</th>
@@ -123,11 +69,21 @@ function DiscountContent(props) {
             <tr key={i}>
               <td>{data.id}</td>
               <td>{data.code}</td>
-              <td>{data.enabled === 1 ? <i class="fa-solid fa-check"></i>:<i class="fa-solid fa-xmark"></i>}</td>
+              <td>
+                {data.enabled === 1 ? (
+                  <i className="fa-solid fa-check"></i>
+                ) : (
+                  <i className="fa-solid fa-xmark"></i>
+                )}
+              </td>
               <td>{data.type}</td>
               <td>{data.value}</td>
-              <td>{(new Date(data.start_date)).toLocaleDateString("en-GB")}</td>
-              <td>{(new Date(data.end_date)).toLocaleDateString("en-GB")}</td>
+              <td>{new Date(data.start_date).toLocaleDateString("en-GB")}</td>
+              <td>
+                {data.end_date === null
+                  ? "N/A"
+                  : new Date(data.end_date).toLocaleDateString("en-GB")}
+              </td>
               <td>
                 <div className="d-flex">
                   <div
@@ -146,6 +102,10 @@ function DiscountContent(props) {
                       style={{ border: "none", background: "transparent" }}
                       className="delete mx-1"
                       data-toggle="modal"
+                      onClick={() => {
+                        handleInspect(data);
+                        setInspectModalOpen(true);
+                      }}
                     >
                       <i
                         className="material-icons"
@@ -162,8 +122,12 @@ function DiscountContent(props) {
                       href="#editpostModal"
                       className="edit mx-1"
                       onClick={() => {
-                        handleEdit(data);
-                        setModalOpen(true);
+                        navigate("/adddiscount", {
+                          state: {
+                            discount_data: data,
+                            handle: "edit",
+                          },
+                        });
                       }}
                       data-toggle="modal"
                     >
@@ -201,139 +165,136 @@ function DiscountContent(props) {
           ))}
         </tbody>
       </table>
-      {modalOpen && (
-        <Modal show={true}>
-          <Modal.Header>
-            <div>Enter The Details To Update.</div>
-            <div>
-              <button
-                type="button"
-                to="/"
-                onClick={() => {
-                  setModalOpen(false);
-                }}
-                className="btn btn-light"
-              >
-                X
-              </button>
-            </div>
-          </Modal.Header>
-          <form onSubmit={handleSubmit} id="details">
+      {inspectModalOpen && (
+        <>
+          <Modal show={true} size="lg" dialogClassName="extraLarge">
             <Modal.Body>
-              <div className="mb-3">
-                <label
-                  htmlFor="exampleFormControlInput1"
-                  className="form-label"
+              <div className="header-bar d-flex">
+                <div className="container">
+                  <span href="/" className="back fs-4">
+                    {discountData.code}
+                  </span>
+                </div>
+                <button
+                  className="btn btn-outline-primary mx-3"
+                  onClick={() => {
+                    setInspectModalOpen(false);
+                  }}
                 >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="name"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                  }}
-                  name="name"
-                  placeholder="name"
-                  required
-                />
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
               </div>
-              <div className="mb-3">
-                <label htmlFor="city" className="form-label">
-                  City
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="city"
-                  name="city"
-                  value={city}
-                  onChange={(e) => {
-                    setCity(e.target.value);
-                  }}
-                  placeholder="city"
-                  required
-                />
-              </div>
-
-              <div className="mb-3 my-3" id="postCodeDiv">
-                <label htmlFor="formFile" className="form-label">
-                  Postal Code
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="postCode"
-                  name="postCode"
-                  value={postCode}
-                  onChange={(e) => {
-                    setPostCode(e.target.value);
-                  }}
-                  placeholder="Postal Code"
-                  required
-                />
-              </div>
-              <div className="mb-3 my-3" id="postCodeDiv">
-                <label htmlFor="formFile" className="form-label">
-                  State
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="state"
-                  name="state"
-                  value={state}
-                  onChange={(e) => {
-                    setState(e.target.value);
-                  }}
-                  placeholder="State"
-                  required
-                />
-              </div>
-              <div className="mb-3 my-3" id="postCodeDiv">
-                <label htmlFor="formFile" className="form-label">
-                  Shipping Address
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="threshold"
-                  name="threshold"
-                  value={threshold}
-                  onChange={(e) => {
-                    setThreshold(e.target.value);
-                  }}
-                  placeholder="Shipping Threshold"
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="city" className="form-label">
-                  shippingFee
-                </label>
-                <input
-                  type="number"
-                  className="form-control"
-                  id="shippingFee"
-                  name="shippingFee"
-                  value={shippingFee}
-                  onChange={(e) => {
-                    setShippingFee(e.target.value);
-                  }}
-                  placeholder="shippingFee"
-                  required
-                />
+              <div className="container main">
+                <div className="top-section">
+                  <div
+                    className="card info-card d-flex"
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-evenly",
+                    }}
+                  >
+                    <div className="mx-3">
+                      <h3>Code</h3>
+                      <p>{discountData.code}</p>
+                      <h3>Enabled</h3>
+                      <p>
+                        {discountData.enabled === 1 ? (
+                          <i className="fa-solid fa-check"></i>
+                        ) : (
+                          <i className="fa-solid fa-xmark"></i>
+                        )}
+                      </p>
+                      <h3>Discount Type</h3>
+                      <p>{discountData.type}</p>
+                      <h3>Usage Count</h3>
+                      <p>{discountData.usage_count}</p>
+                    </div>
+                    <div className="mx-3" style={{ marginRight: "45px" }}>
+                      <h3>Start Date</h3>
+                      <p>
+                        {new Date(discountData.start_date).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </p>
+                      <h3>End Date</h3>
+                      <p>
+                        {discountData.end_date === null
+                          ? "N/A"
+                          : new Date(discountData.end_date).toLocaleDateString(
+                              "en-GB"
+                            )}
+                      </p>
+                      <h3>Discount Value</h3>
+                      <p>
+                        {discountData.type === "percent"
+                          ? discountData.value + "%"
+                          : discountData.value + "₹"}
+                      </p>
+                      <h3>Usage Limit</h3>
+                      <p>{discountData.usage_limit}</p>
+                    </div>
+                  </div>
+                  <div
+                    className="card info-card d-flex"
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-evenly",
+                    }}
+                  >
+                    <div className="mx-3">
+                      <h3>New Customer Only</h3>
+                      <p>
+                        {discountData.new_customers_only === 1 ? (
+                          <i className="fa-solid fa-check"></i>
+                        ) : (
+                          <i className="fa-solid fa-xmark"></i>
+                        )}
+                      </p>
+                      <h3>One Use Per Customer</h3>
+                      <p>
+                        {discountData.one_per_customer === 1 ? (
+                          <i className="fa-solid fa-check"></i>
+                        ) : (
+                          <i className="fa-solid fa-xmark"></i>
+                        )}
+                      </p>
+                      <h3>Requirement Type</h3>
+                      <p>{discountData.requirement_type}</p>
+                      <h3>Requirement Value</h3>
+                      <p>
+                        {discountData.requirement_value === null
+                          ? "N/A"
+                          : discountData.requirement_value}
+                      </p>
+                    </div>
+                    <div className="mx-3" style={{ marginRight: "45px" }}>
+                      <h3>Product Scope</h3>
+                      <p>{discountData.product_scope}</p>
+                      <h3>Products Id's</h3>
+                      <p>
+                        {discountData.product_ids === null
+                          ? "N/A"
+                          : JSON.parse(discountData.product_ids).map(
+                              (value) => value + ", "
+                            )}
+                      </p>
+                      <h3>User Scope</h3>
+                      <p>{discountData.user_scope}</p>
+                      <h3>User Id's</h3>
+                      <p>
+                        {discountData.user_ids === null
+                          ? "N/A"
+                          : JSON.parse(discountData.user_ids).map(
+                              (value) => value + ", "
+                            )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Modal.Body>
-            <Modal.Footer>
-              <button type="submit" className="btn btn-outline-success">
-                Submit
-              </button>
-            </Modal.Footer>
-          </form>
-        </Modal>
+          </Modal>
+        </>
       )}
       {modalDeleteOpen && (
         <Modal show={true}>

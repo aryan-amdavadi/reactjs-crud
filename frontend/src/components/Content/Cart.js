@@ -154,8 +154,8 @@ function CartPanel({ open, onClose, onCartChange }) {
         </div>
 
         <div className="cart-body">
-          {cartData.map((item) => (
-            <div className="cart-item" key={item.product_id || item.id}>
+          {cartData.map((item,i) => (
+            <div className="cart-item" key={i}>
               <div className="item-info">
                 <h4>
                   {productData.find((data) => data.id === item.product_id)

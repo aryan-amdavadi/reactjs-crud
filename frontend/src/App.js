@@ -11,8 +11,8 @@ import CheckoutPage from "./components/Content/Checkout";
 import ShippingLayout from "./components/Admin/ShippingLayout";
 import ProfilePage from "./components/Content/Profile";
 import OrderHistoryPage from "./components/Content/OrderHistory";
-import AddDiscountPage from "./components/Admin/DiscountAdd";
 import DiscountLayout from "./components/Admin/DiscountLayout"
+import DiscountAdd from "./components/Admin/DiscountAdd"
 
 function App() {
   return (
@@ -31,6 +31,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/history" element={<OrderHistoryPage />}/>
           <Route path="/discount" element={<DiscountLayout />}/>
+          <Route path="/adddiscount" element={<DiscountAdd />}/>
         </Routes>
       </Router>
     </>

@@ -99,29 +99,36 @@ const AuthForm = () => {
           </button>
         </ModalFooter>
       </Modal>
-      <Modal
-        show={errorModalShow}
-        style={{
-          backgroundColor: "transparent",
-          color: "#b2fbff96",
-          fontSize: "30px",
-        }}
-      >
-        <ModalBody style={{ backgroundColor: "#324b55" }}>
-          {isLogin ? "Invalid Username or Password!!" : "Something is Wrong :("}
-          <p>Try Again.</p>
-        </ModalBody>
-        <ModalFooter style={{ backgroundColor: "#324b55" }}>
-          <button
-            className="btn btn-outline-danger"
-            onClick={() => {
-              setErrorModalShow(false);
-            }}
-          >
-            Close
-          </button>
-        </ModalFooter>
-      </Modal>
+      <Modal show={errorModalShow}>
+          <Modal.Header>
+            <div>Error....</div>
+            <div>
+              <button
+                type="button"
+                to="/"
+                onClick={() => {
+                  setErrorModalShow(false);
+                }}
+                className="btn btn-light"
+              >
+                X
+              </button>
+            </div>
+          </Modal.Header>
+          <Modal.Body>Invalid Credentials.</Modal.Body>
+          <Modal.Footer>
+            <button
+              type="button"
+              to="/"
+              onClick={() => {
+                  setErrorModalShow(false);
+                }}
+              className="btn btn-outline-danger"
+            >
+              Close
+            </button>
+          </Modal.Footer>
+        </Modal>
       <ForgotPass
         show={forgotPassOpen}
         onClose={() => setForgotPassOpen(false)}

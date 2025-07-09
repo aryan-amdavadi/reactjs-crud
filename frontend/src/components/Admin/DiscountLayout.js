@@ -1,37 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import Navbar from "../Content/Navbar";
-import axios from "axios";
-import Modal from "react-bootstrap/Modal";
 import DiscountContent from "./DiscountContent";
+import { useNavigate } from "react-router-dom";
 
 function DiscountLayout() {
-  const [tableOpen, setTableOpen] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const handleSubmit = (e) => {
-    setTableOpen(false);
-    e.preventDefault();
-    const formData = {
-      name: e.target.name.value,
-      city: e.target.city.value,
-      postCode: e.target.postCode.value,
-      state: e.target.state.value,
-      threshold: e.target.threshold.value,
-      shippingFee: e.target.shippingFee.value,
-    };
-    axios
-      .post("http://localhost:8081/api/addshipping", formData)
-      .then((responce) => {
-        console.log("Responce :", responce.data);
-        setTableOpen(true);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-    setModalOpen(false);
-    setTimeout(() => {
-      setTableOpen(true);
-    }, 1);
-  };
+  const navigate = useNavigate();
+  ;
   return (
     <>
       <Navbar />
@@ -69,7 +43,7 @@ function DiscountLayout() {
                       style={{ width: "200px" }}
                       className="btn btn-success mx-3"
                       onClick={() => {
-                        setModalOpen(true);
+                        navigate("/adddiscount")
                       }}
                       data-toggle="modal"
                     >
@@ -79,129 +53,8 @@ function DiscountLayout() {
                   </div>
                 </div>
               </div>
-              {<DiscountContent show={tableOpen} />}
+              {<DiscountContent />}
 
-              {modalOpen && (
-                <Modal show={true}>
-                  <form onSubmit={handleSubmit} id="details">
-                    <Modal.Header>
-                      <div>Enter The Shipping Details</div>
-                      <div>
-                        <button
-                          type="button"
-                          to="/"
-                          onClick={() => {
-                            setModalOpen(false);
-                          }}
-                          className="btn btn-light"
-                        >
-                          <i className="fa-solid fa-x"></i>
-                        </button>
-                      </div>
-                    </Modal.Header>
-                    <Modal.Body>
-                      <div className="mb-3">
-                        <label htmlFor="Title" className="form-label">
-                          Name
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          id="name"
-                          name="name"
-                          placeholder="Name"
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label
-                          htmlFor="exampleFormControlInput1"
-                          className="form-label"
-                        >
-                          City
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          id="city"
-                          name="city"
-                          placeholder="City"
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label
-                          htmlFor="exampleFormControlInput1"
-                          className="form-label"
-                        >
-                          Postal Code
-                        </label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          id="postCode"
-                          name="postCode"
-                          placeholder="Postal Code"
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label
-                          htmlFor="exampleFormControlInput1"
-                          className="form-label"
-                        >
-                          State
-                        </label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          id="state"
-                          name="state"
-                          placeholder="State"
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label
-                          htmlFor="exampleFormControlInput1"
-                          className="form-label"
-                        >
-                          Shipping Threshold
-                        </label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          id="threshold"
-                          name="threshold"
-                          placeholder="Threshold"
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label
-                          htmlFor="exampleFormControlInput1"
-                          className="form-label"
-                        >
-                          Shipping Fee
-                        </label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          id="shippingFee"
-                          name="shippingFee"
-                          placeholder="Shipping Fee"
-                          required
-                        />
-                      </div>
-                    </Modal.Body>
-                    <Modal.Footer>
-                      <button type="submit" className="btn btn-outline-success">
-                        Submit
-                      </button>
-                    </Modal.Footer>
-                  </form>
-                </Modal>
-              )}
               <div id="modals"></div>
             </div>
           </div>

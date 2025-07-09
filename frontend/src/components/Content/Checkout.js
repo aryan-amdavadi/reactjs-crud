@@ -105,21 +105,22 @@ export default function CheckoutPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setShowTimeFrame(false);
     setForm((prevForm) => {
       const updatedForm = { ...prevForm, [name]: value };
-
-      if (updatedForm.city !== "" && updatedForm.post_code !== "") {
-        axios
-          .post("http://localhost:8081/timeframe", {
-            city: updatedForm.city,
-            post_code: Number(updatedForm.post_code),
-          })
-          .then((res) => {
-            setOptions(res.data);
-            setShowTimeFrame(true);
-          })
-          .catch((err) => {});
+      if (e.target.name === "city" || e.target.name === "post_code") {
+        setShowTimeFrame(false);
+        if (updatedForm.city !== "" && updatedForm.post_code !== "") {
+          axios
+            .post("http://localhost:8081/timeframe", {
+              city: updatedForm.city,
+              post_code: Number(updatedForm.post_code),
+            })
+            .then((res) => {
+              setOptions(res.data);
+              setShowTimeFrame(true);
+            })
+            .catch((err) => {});
+        }
       }
       return updatedForm;
     });
@@ -138,42 +139,37 @@ export default function CheckoutPage() {
       setShowToast(true);
     }
 
-
-    
-    const {notes,fullName, ...userData} = form
-    const fullname_part = form.fullName.split(" ",2);
-    const First_Name = fullname_part[0]
-    const Last_Name = fullname_part[1]
+    const { notes, fullName, ...userData } = form;
+    const fullname_part = form.fullName.split(" ", 2);
+    const First_Name = fullname_part[0];
+    const Last_Name = fullname_part[1];
     userData.first_name = First_Name;
     userData.last_name = Last_Name;
     const dataObject = {
-      user_id : userId,
+      user_id: userId,
       user_details: JSON.stringify(userData),
       time_frame: selected,
-      shipping_cost: shippingThreshold > totalPrice
-                    ? Number(shippingFee.toFixed(2))
-                    : 0.00,
+      shipping_cost:
+        shippingThreshold > totalPrice ? Number(shippingFee.toFixed(2)) : 0.0,
       orderData: cartData,
       notes: form.notes,
       discount_code: coupon,
+      discount_amount:totalPrice-discountedTotal,
       amount_paid: getFinalTotal().toFixed(2),
-      product_price: totalPrice.toFixed(2)
+      product_price: totalPrice.toFixed(2),
     };
-    console.log(dataObject)
+    console.log(dataObject);
     axios
       .post("http://localhost:8081/api/addorder", dataObject)
       .then((res) => {
-        setToastMessage("Order Successfull")
-        setToastTheme("success")
-        setShowToast(true)
-        setTimeout(()=>{
-          navigate("/menu")
-        },3500)
+        setToastMessage("Order Successfull");
+        setToastTheme("success");
+        setShowToast(true);
+        setTimeout(() => {
+          navigate("/menu");
+        }, 3500);
       })
       .catch((err) => {});
-
-
-
   };
   const handleLogin = (e) => {
     e.preventDefault();
@@ -194,11 +190,47 @@ export default function CheckoutPage() {
       });
   };
   const applyCoupon = () => {
-    if (coupon.toLowerCase() === "tab10") {
-      const discount = totalPrice * 0.1;
-      setAppliedCoupon({ code: coupon, amount: discount });
-      setDiscountedTotal(totalPrice - discount);
-    }
+    if (!coupon.trim()) return;
+
+    axios
+      .post("http://localhost:8081/api/validatecoupon", {
+        code: coupon,
+        user_id: userId,
+        total: totalPrice,
+        cartData: cartData,
+      })
+      .then((res) => {
+        const data = res.data;
+
+        if (!data.valid) {
+          setToastMessage(data.message || "Invalid or expired coupon");
+          setToastTheme("danger");
+          setShowToast(true);
+          return;
+        }
+
+        const discountAmount =
+          data.type === "percent"
+            ? (totalPrice * data.value) / 100
+            : Math.min(data.value, totalPrice);
+
+        setAppliedCoupon({
+          code: coupon,
+          amount: discountAmount,
+        });
+
+        setDiscountedTotal(totalPrice - discountAmount);
+
+        setToastMessage("Coupon Applied Successfully");
+        setToastTheme("success");
+        setShowToast(true);
+      })
+      .catch((err) => {
+        console.log(err);
+        setToastMessage("Something went wrong");
+        setToastTheme("danger");
+        setShowToast(true);
+      });
   };
 
   const removeCoupon = () => {

@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./AddDiscount.css";
 import axios from "axios";
 import AppNavbar from "../Content/Navbar";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AddDiscount() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [discountId, setDiscountId] = useState();
   const [discountCode, setDiscountCode] = useState("");
   const [discountValue, setDiscountValue] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -31,6 +36,82 @@ export default function AddDiscount() {
 
   const [errors, setErrors] = useState({});
 
+  const loadProductsByIds = async (productIds) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:8081/api/getproductsbyids",
+        {
+          ids: productIds,
+        }
+      );
+      setSelectedProducts(res.data); // Assumes each item has { id, title }
+    } catch (error) {
+      console.error("Failed to load products by IDs:", error);
+    }
+  };
+
+  const loadUsersByIds = async (userIds) => {
+    try {
+      const res = await axios.post("http://localhost:8081/api/getusersbyids", {
+        ids: userIds,
+      });
+      setSelectedUsers(res.data);
+    } catch (error) {
+      console.error("Failed to load users by IDs:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (location.state?.handle === "edit" && location.state.discount_data) {
+      const discountData = location.state.discount_data;
+      setDiscountCode(discountData.code || "");
+      setDiscountValue(discountData.value || "");
+      setStartDate(discountData.start_date?.split("T")[0] || "");
+      setEndDateEnabled(!!discountData.end_date);
+      setEndDate(discountData.end_date?.split("T")[0] || "");
+      setDiscountId(discountData.id || "");
+      setUsageLimitChecked(discountData.usage_limit !== null);
+      setUsageLimit(discountData.usage_limit || "");
+      setOnePerCustomerChecked(!!discountData.one_per_customer);
+      setNewCustomersOnlyChecked(!!discountData.new_customers_only);
+
+      setRequirementType(discountData.requirement_type || "none");
+      setRequirementValue(discountData.requirement_value || "");
+
+      setEnabled(Boolean(discountData.enabled));
+
+      // Set discount type radio (percent or fixed)
+      const typeRadio = document.getElementById(discountData.type);
+      if (typeRadio) typeRadio.checked = true;
+
+      // Handle specific products
+      if (discountData.product_scope === "specific") {
+        setSpecificProductEnabled(true);
+        try {
+          const productIds = JSON.parse(discountData.product_ids);
+          loadProductsByIds(productIds);
+        } catch {
+          setSelectedProducts([]);
+        }
+      } else {
+        setSpecificProductEnabled(false);
+      }
+
+      // Handle specific users
+      if (discountData.user_scope === "specific") {
+        setEligibility("specificUsers");
+        try {
+          const userIds = JSON.parse(discountData.user_ids);
+          loadUsersByIds(userIds);
+        } catch {
+          setSelectedUsers([]);
+        }
+      } else {
+        setEligibility(discountData.user_scope || "everyone");
+      }
+    }
+  }, [location.state]);
+
   const generateDiscountCode = (length = 8) => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "";
@@ -54,7 +135,7 @@ export default function AddDiscount() {
   const handleSelect = (product) => {
     const exists = selectedProducts.find((p) => p.id === product.id);
     if (!exists) {
-      setSelectedProducts((prev) => [...prev, product]); // product has .id and .title
+      setSelectedProducts((prev) => [...prev, product]);
     }
     setQuery("");
     setSearchProductData([]);
@@ -75,7 +156,7 @@ export default function AddDiscount() {
   const handleUserSelect = (user) => {
     const exists = selectedUsers.find((u) => u.Emp_Id === user.Emp_Id);
     if (!exists) {
-      setSelectedUsers((prev) => [...prev, user]); // store full object
+      setSelectedUsers((prev) => [...prev, user]);
     }
 
     setUserQuery("");
@@ -137,15 +218,29 @@ export default function AddDiscount() {
         newCustomersOnly: newCustomersOnlyChecked,
         enabled,
       };
-      console.log(discountData)
-      axios
-        .post("http://localhost:8081/api/adddiscount", discountData)
-        .then((responce) => {
-          console.log("Responce :", responce.data);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      if (location.state?.handle === "edit") {
+        //Axios Call For Edit
+        discountData.discount_id = discountId;
+        axios
+          .post("http://localhost:8081/api/editdiscount", discountData)
+          .then((responce) => {
+            console.log("Responce :", responce.data);
+            navigate("/discount");
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      } else {
+        axios
+          .post("http://localhost:8081/api/adddiscount", discountData)
+          .then((responce) => {
+            console.log("Responce :", responce.data);
+            navigate("/discount");
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
     }
   };
 
@@ -154,7 +249,9 @@ export default function AddDiscount() {
       <AppNavbar />
       <div className="tabster-discount-page">
         <div className="discount-header">
-          <h2>Create Discount</h2>
+          <h2>
+            {location.state?.handle === "edit" ? "Edit" : "Create"} Discount
+          </h2>
         </div>
 
         <div
@@ -516,9 +613,16 @@ export default function AddDiscount() {
 
           <div className="form-actions">
             <button className="btn-create" onClick={handleSubmit}>
-              Create
+              {location.state?.handle === "edit" ? "Edit" : "Create"}
             </button>
-            <button className="btn-cancel">Cancel</button>
+            <button
+              className="btn-cancel"
+              onClick={() => {
+                navigate("/discount");
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>

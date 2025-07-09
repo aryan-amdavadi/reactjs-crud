@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
+const { isDate } = require("util");
 
 const app = express();
 app.use(cors());
@@ -168,12 +169,71 @@ app.get("/discounts", (req, res) => {
   );
 });
 
-
 //Get Orders
 app.post("/api/orders", (req, res) => {
   const { user_id } = req.body;
   const sql = "SELECT * FROM orders WHERE user_id = ?";
   db.query(sql, [Number(user_id)], (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
+
+app.post("/discountdata", (req, res) => {
+  const { user_id } = req.body;
+  const sql = "SELECT * FROM order_discounts WHERE user_id = ?";
+  db.query(sql, [Number(user_id)], (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
+app.post("/orderdata", (req, res) => {
+  const { order_id } = req.body;
+  const sql = "SELECT * FROM order_items WHERE order_id = ?";
+  db.query(sql, [Number(order_id)], (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
+
+
+app.post("/api/getproductsbyids", (req, res) => {
+  const { ids } = req.body;
+  const sql = `SELECT id, title FROM products WHERE id IN (${ids})`;
+  db.query(sql, (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
+
+app.post("/api/getproductsname", (req, res) => {
+  const { ids } = req.body;
+  const sql = `SELECT id, title FROM products WHERE id = ${ids}`;
+  db.query(sql, (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
+
+app.post("/api/getusersbyids", (req, res) => {
+  const { ids } = req.body;
+  const sql = `SELECT Emp_Id, First_Name, Last_Name FROM emp WHERE Emp_Id IN (${ids})`;
+  db.query(sql, (error, results) => {
     if (error) return res.status(500).json({ error });
     if (results.length === 0)
       return res.status(401).json({ message: "Invalid credentials" });
@@ -220,13 +280,11 @@ app.post("/api/adddiscount", (req, res) => {
       ? "specific"
       : "everyone";
 
-  const product_ids = productScope === "specific"
-    ? JSON.stringify(applicableProducts)
-    : null;
+  const product_ids =
+    productScope === "specific" ? JSON.stringify(applicableProducts) : null;
 
-  const user_ids = userScope === "specific"
-    ? JSON.stringify(eligibleUsers)
-    : null;
+  const user_ids =
+    userScope === "specific" ? JSON.stringify(eligibleUsers) : null;
 
   const sql = `
     INSERT INTO discounts (
@@ -271,7 +329,10 @@ app.post("/api/adddiscount", (req, res) => {
       console.error("Error inserting discount:", err);
       return res.status(500).json({ error: "Failed to insert discount." });
     }
-    res.json({ message: "Discount created successfully.", discountId: result.insertId });
+    res.json({
+      message: "Discount created successfully.",
+      discountId: result.insertId,
+    });
   });
 });
 
@@ -364,12 +425,13 @@ app.post("/api/addcart", (req, res) => {
   });
 });
 
-app.post("/api/addorder", (req, res) => {
+app.post("/api/adddorder", (req, res) => {
   const {
     user_id,
     user_details,
     orderData,
     discount_code,
+    discount_amount,
     amount_paid,
     time_frame,
     shipping_cost,
@@ -386,16 +448,28 @@ app.post("/api/addorder", (req, res) => {
     if (error) return res.status(500).json({ error });
 
     const insertedOrderId = result.insertId;
+    const discountQuery = `INSERT INTO order_discounts (order_id, user_id, code, amount) VALUES (?, ?, ?, ?)`;
+    const updateDiscountQuery = `update discounts set usage_count = usage_count + 1 where code = '${discount_code}' and usage_limit != null`;
+    db.query(discountQuery, [discount_code], (error, data) => {
+      if (error) {
+        return res
+          .status(500)
+          .json({ error: "Failed to Update discount", detail: error });
+      }
+    });
 
-    // If no cart items, just return
-    if (orderData.length === 0) {
-      return res.json({
-        message: "Order inserted (no items)",
-        order_id: insertedOrderId,
-      });
-    }
+    db.query(
+      updatediscountquery,
+      [insertedOrderId, user_id, discount_code, discount_amount],
+      (error, data) => {
+        if (error) {
+          return res
+            .status(500)
+            .json({ error: "Failed to insert discount", detail: error });
+        }
+      }
+    );
 
-    // Track how many inserts completed
     let completedInserts = 0;
     let hasError = false;
 
@@ -438,6 +512,277 @@ app.post("/api/addorder", (req, res) => {
       );
     }
   });
+});
+
+app.post("/api/addorder", (req, res) => {
+  const {
+    user_id,
+    user_details,
+    orderData,
+    discount_code,
+    discount_amount,
+    amount_paid,
+    time_frame,
+    shipping_cost,
+    notes,
+    product_price,
+  } = req.body;
+
+  const addOrderQuery = `
+    INSERT INTO orders (user_id, shipping_address, delivery_notes, shipping_method, shipping_cost, product_price, amount_paid)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(
+    addOrderQuery,
+    [
+      user_id,
+      user_details,
+      notes,
+      time_frame,
+      shipping_cost,
+      product_price,
+      amount_paid,
+    ],
+    (error, result) => {
+      if (error) return res.status(500).json({ error });
+
+      const insertedOrderId = result.insertId;
+
+      // If a discount was applied, insert and update usage count
+      if (discount_code) {
+        const discountQuery = `
+          INSERT INTO order_discounts (order_id, user_id, code, amount)
+          VALUES (?, ?, ?, ?)
+        `;
+        db.query(
+          discountQuery,
+          [insertedOrderId, user_id, discount_code, discount_amount],
+          (error) => {
+            if (error) {
+              return res.status(500).json({
+                error: "Failed to insert discount",
+                detail: error,
+              });
+            }
+
+            // Only update usage count if the discount has a limit
+            const updateDiscountQuery = `
+              UPDATE discounts 
+              SET usage_count = usage_count + 1 
+              WHERE code = ? AND usage_limit IS NOT NULL
+            `;
+            db.query(updateDiscountQuery, [discount_code], (err) => {
+              if (err) {
+                return res.status(500).json({
+                  error: "Failed to update discount usage count",
+                  detail: err,
+                });
+              }
+            });
+          }
+        );
+      }
+
+      // Proceed to insert order items
+      let completedInserts = 0;
+      let hasError = false;
+
+      if (orderData.length === 0) {
+        return res.json({
+          message: "Order inserted (no items)",
+          order_id: insertedOrderId,
+        });
+      }
+
+      for (let i = 0; i < orderData.length; i++) {
+        const item = orderData[i];
+        const orderItemsQuery = `
+          INSERT INTO order_items (order_id, product_id, price, quantity)
+          VALUES (?, ?, ?, ?)
+        `;
+        db.query(
+          orderItemsQuery,
+          [insertedOrderId, item.product_id, item.price, item.quantity],
+          (err) => {
+            if (hasError) return;
+            if (err) {
+              hasError = true;
+              return res.status(500).json({
+                error: "Failed to insert order items",
+                detail: err,
+              });
+            }
+            completedInserts++;
+            if (completedInserts === orderData.length) {
+              const clearCartQuery = `DELETE FROM carts WHERE user_id = ?`;
+              db.query(clearCartQuery, [user_id], (clearErr) => {
+                if (clearErr) {
+                  return res.status(500).json({
+                    success: false,
+                    error: "Failed to clear cart",
+                    detail: clearErr,
+                  });
+                }
+                return res.json({
+                  message: "Order and items inserted successfully",
+                  order_id: insertedOrderId,
+                  total_items: completedInserts,
+                });
+              });
+            }
+          }
+        );
+      }
+    }
+  );
+});
+
+app.post("/api/validatecoupon", (req, res) => {
+  const { code, user_id, total, cartData } = req.body;
+  db.query(
+    `SELECT * FROM discounts WHERE code = '${code}' AND enabled = 1`,
+    (err, results) => {
+      if (err)
+        return res.status(500).send({ valid: false, message: "Server error" });
+      if (results.length === 0)
+        return res.send({ valid: false, message: "Invalid coupon code" });
+
+      const coupon = results[0];
+
+      if (
+        coupon.usage_limit !== null &&
+        coupon.usage_limit > 0 &&
+        coupon.usage_count >= coupon.usage_limit
+      ) {
+        return res.send({
+          valid: false,
+          message: "Coupon usage limit reached",
+        });
+      }
+
+      if (coupon.user_scope === "specific") {
+        const userIds = JSON.parse(coupon.user_ids || "[]");
+        if (!userIds.includes(parseInt(user_id))) {
+          return res.send({
+            valid: false,
+            message: "You are not eligible for this coupon",
+          });
+        }
+      }
+      if (coupon.new_customers_only === 1) {
+        db.query(
+          "SELECT COUNT(*) as order_count FROM orders WHERE user_id = ?",
+          [user_id],
+          (orderErr, orderResult) => {
+            if (orderErr)
+              return res
+                .status(500)
+                .send({ valid: false, message: "Server error" });
+            if (orderResult[0].order_count > 0) {
+              return res.send({
+                valid: false,
+                message: "Only new users can use this coupon",
+              });
+            }
+            validateDateAndRequirement();
+          }
+        );
+        return;
+      }
+      if (coupon.one_per_customer === 1) {
+        db.query(
+          "SELECT * FROM order_discounts WHERE user_id = ?",
+          [user_id],
+          (Err, Result) => {
+            if (Err)
+              return res
+                .status(500)
+                .send({ valid: false, message: "Server error" });
+            if (Result.length!==0) {
+              return res.send({
+                valid: false,
+                message: "You have already used this coupoun.",
+              });
+            }
+            validateDateAndRequirement();
+          }
+        );
+        return
+      }
+
+      validateDateAndRequirement();
+
+      function validateDateAndRequirement() {
+        const now = new Date();
+        const start = new Date(coupon.start_date);
+        const end = coupon.end_date ? new Date(coupon.end_date) : null;
+
+        if (now < start) {
+          return res.send({ valid: false, message: "Coupon not active yet" });
+        }
+
+        if (end && now > end) {
+          return res.send({ valid: false, message: "Coupon has expired" });
+        }
+
+        if (
+          coupon.requirement_type === "minPurchase" &&
+          total < coupon.requirement_value
+        ) {
+          return res.send({
+            valid: false,
+            message: `Minimum purchase amount must be ₹${coupon.requirement_value}`,
+          });
+        }
+        if (
+          coupon.requirement_type === "minQty" &&
+          Array.isArray(cartData) &&
+          cartData.reduce((acc, item) => acc + (item.quantity || 0), 0) <
+            coupon.requirement_value
+        ) {
+          return res.send({
+            valid: false,
+            message: `Minimum quantity required is ${coupon.requirement_value}`,
+          });
+        }
+
+        if (coupon.product_scope === "specific") {
+          let allowedIds = [];
+          try {
+            allowedIds = JSON.parse(coupon.product_ids || "[]").map(String);
+          } catch (err) {
+            console.error("Invalid product_ids JSON:", coupon.product_ids);
+            return res.status(500).send({
+              valid: false,
+              message: "Server error: Invalid product list",
+            });
+          }
+
+          const cartProductIds = Array.isArray(cartData)
+            ? cartData.map((item) => String(item.product_id))
+            : [];
+          const hasAllowedProduct = cartProductIds.some((id) =>
+            allowedIds.includes(id)
+          );
+
+          if (!hasAllowedProduct) {
+            return res.send({
+              valid: false,
+              message:
+                "This coupon is not applicable to the products in your cart",
+            });
+          }
+        }
+
+        return res.send({
+          valid: true,
+          type: coupon.type,
+          value: coupon.value,
+        });
+      }
+    }
+  );
 });
 
 app.post("/api/editemployee", upload.single("image"), (req, res) => {
@@ -531,6 +876,83 @@ app.post("/api/editproduct", upload.single("image"), (req, res) => {
   }
 });
 
+app.post("/api/editdiscount", (req, res) => {
+  const {
+    discount_id,
+    discountCode,
+    discountType,
+    discountValue,
+    applicableProducts,
+    eligibleUsers,
+    requirementType,
+    requirementValue,
+    startDate,
+    endDate,
+    usageLimit,
+    onePerCustomer,
+    newCustomersOnly,
+    enabled,
+  } = req.body;
+
+  const productScope = Array.isArray(applicableProducts) ? "specific" : "all";
+  const userScope =
+    Array.isArray(eligibleUsers) && eligibleUsers.length > 0
+      ? "specific"
+      : "everyone";
+
+  const product_ids =
+    productScope === "specific" ? JSON.stringify(applicableProducts) : null;
+
+  const user_ids =
+    userScope === "specific" ? JSON.stringify(eligibleUsers) : null;
+
+  const sql = `
+    UPDATE discounts set
+      code = ?,
+      type= ?,
+      value = ?,
+      product_scope=?,
+      product_ids=?,
+      user_scope=?,
+      user_ids=?,
+      requirement_type=?,
+      requirement_value=?,
+      start_date=?,
+      end_date=?,
+      usage_limit=?,
+      one_per_customer=?,
+      new_customers_only=?,
+      enabled=?
+      WHERE id = ?
+  `;
+
+  const values = [
+    discountCode,
+    discountType,
+    discountValue,
+    productScope,
+    product_ids,
+    userScope,
+    user_ids,
+    requirementType,
+    requirementValue,
+    startDate,
+    endDate || null,
+    usageLimit || null,
+    onePerCustomer,
+    newCustomersOnly,
+    enabled,
+    discount_id,
+  ];
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error("Error Updating discount:", err);
+      return res.status(500).json({ error: "Failed to update discount." });
+    }
+    res.json({ message: "Discount updated successfully." });
+  });
+});
+
 app.post("/api/quantity", (req, res) => {
   const product_id = req.body.product_id;
   const quantity = req.body.quantity;
@@ -554,7 +976,7 @@ app.post("/api/changepassword", (req, res) => {
 });
 
 app.post("/api/searchproduct", (req, res) => {
-  const keyword = req.body.keyword;  
+  const keyword = req.body.keyword;
   const searchQuery = `SELECT id, title FROM products WHERE title like '%${keyword}%';`;
   db.query(searchQuery, (error, data) => {
     if (error) return res.json(error);
@@ -615,6 +1037,15 @@ app.delete("/api/deletecomment", (req, res) => {
 app.delete("/api/deleteshipping", (req, res) => {
   const id = req.body.id;
   const deleteQuery = `delete from shipping_locations where id = ${id}`;
+  db.query(deleteQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.delete("/api/deletediscount", (req, res) => {
+  const id = req.body.discount_id;
+  const deleteQuery = `delete from discounts where id = ${id}`;
   db.query(deleteQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);

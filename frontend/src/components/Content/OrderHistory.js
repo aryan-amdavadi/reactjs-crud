@@ -7,13 +7,66 @@ export default function OrderHistoryPage() {
   const userId = localStorage.getItem("user_id");
   const [orders, setOrders] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [discountData, setDiscountdata] = useState([]);
+  const [orderDetails, setOrderDetails] = useState({});
+  const [productsName, setProductsName]=useState({})
+
 
   useEffect(() => {
     axios
       .post(`http://localhost:8081/api/orders`, { user_id: userId })
       .then((res) => setOrders(res.data))
       .catch((err) => console.error("Error fetching orders:", err));
+    axios
+      .post(`http://localhost:8081/discountdata`, { user_id: userId })
+      .then((res) => setDiscountdata(res.data))
+      .catch((err) => console.error("Error fetching orders:", err));
   }, [userId]);
+  useEffect(() => {
+  if (orders.length > 0) {
+    const fetchDetails = async () => {
+      try {
+        const responses = await Promise.all(
+          orders.map((order) =>
+            axios.post(`http://localhost:8081/orderdata`, {
+              order_id: order.id,
+            })
+          )
+        );
+
+        const details = {};
+        let allProductIds = new Set();
+
+        responses.forEach((res, idx) => {
+          const orderId = orders[idx].id;
+          details[orderId] = res.data;
+
+          res.data.forEach((item) => {
+            allProductIds.add(item.product_id);
+          });
+        });
+
+        const productIdArray = Array.from(allProductIds);
+
+        const productNameResponse = await axios.post(`http://localhost:8081/api/getproductsbyids`, {
+          ids: productIdArray,
+        });
+
+        const productNameMap = {};
+        productNameResponse.data.forEach((item) => {
+          productNameMap[item.id] = item.title;
+        });
+
+        setProductsName(productNameMap); // update once
+        setOrderDetails(details);
+      } catch (err) {
+        console.error("Error fetching order details or product names:", err);
+      }
+    };
+
+    fetchDetails();
+  }
+}, [orders]);
 
   const toggleDetails = (id) => {
     setExpandedOrderId((prev) => (prev === id ? null : id));
@@ -35,6 +88,9 @@ export default function OrderHistoryPage() {
           <div className="order-list">
             {orders.map((order) => {
               const address = JSON.parse(order.shipping_address || "{}");
+              const discount = discountData.find(
+                (d) => d.order_id === order.id
+              );
 
               return (
                 <motion.div
@@ -46,28 +102,73 @@ export default function OrderHistoryPage() {
                 >
                   <div className="order-summary">
                     <h3>Order #{order.id}</h3>
-                    <p><strong>Total Paid:</strong> ₹{order.amount_paid}</p>
+                    <p>
+                      <strong>Total Paid:</strong> ₹{order.amount_paid}
+                    </p>
                     <button
                       className="view-details-btn"
                       onClick={() => toggleDetails(order.id)}
                     >
-                      {expandedOrderId === order.id ? "Hide Details" : "View Details"}
+                      {expandedOrderId === order.id
+                        ? "Hide Details"
+                        : "View Details"}
                     </button>
                   </div>
 
                   {expandedOrderId === order.id && (
                     <div className="order-details">
-                      <p><strong>Name:</strong> {address.first_name+ " " + address.last_name}</p>
-                      <p><strong>Email:</strong> {address.email}</p>
-                      <p><strong>Phone:</strong> {address.phone}</p>
-                      <p><strong>Address:</strong> {address.address}</p>
-                      <p><strong>Postal Code:</strong> {address.post_code}</p>
-                      <p><strong>City:</strong> {address.city}, {address.state} - {address.post_code}</p>
-                      <p><strong>Delivery Notes:</strong> {order.delivery_notes || "None"}</p>
-                      <p><strong>Payment Method:</strong> {order.payment_method}</p>
-                      <p><strong>Shipping Method:</strong> {order.shipping_method}</p>
-                      <p><strong>Shipping Cost:</strong> ₹{order.shipping_cost}</p>
-                      <p><strong>Subtotal:</strong> ₹{order.product_price}</p>
+                      <p>
+                        <strong>Name:</strong>{" "}
+                        {address.first_name + " " + address.last_name}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {address.email}
+                      </p>
+                      <p>
+                        <strong>Phone:</strong> {address.phone}
+                      </p>
+                      <p>
+                        <strong>Address:</strong> {address.address}
+                      </p>
+                      <p>
+                        <strong>Postal Code:</strong> {address.post_code}
+                      </p>
+                      <p>
+                        <strong>City:</strong> {address.city} {address.state}
+                      </p>
+                      <p>
+                        <strong>Discount Code :</strong>
+                        {discount.order_id === order.id ? discount.code : "N/A"}
+                      </p>
+                      <p>
+                        <strong>Discount Amount :</strong>
+                        {discount.order_id === order.id
+                          ? discount.amount
+                          : "N/A"}
+                      </p>
+                      <p>
+                        <strong>Delivery Notes:</strong>{" "}
+                        {order.delivery_notes || "None"}
+                      </p>
+                      <p>
+                        <strong>Payment Method:</strong> {order.payment_method}
+                      </p>
+                      <p>
+                        <strong>Items :</strong>{" "}
+                        {orderDetails[order.id].map((data)=>(
+                          productsName[data.product_id]
+                          ))}
+                      </p>
+                      <p>
+                        <strong>Shipping Method:</strong>{" "}
+                        {order.shipping_method}
+                      </p>
+                      <p>
+                        <strong>Shipping Cost:</strong> ₹{order.shipping_cost}
+                      </p>
+                      <p>
+                        <strong>Subtotal:</strong> ₹{order.product_price}
+                      </p>
                     </div>
                   )}
                 </motion.div>
