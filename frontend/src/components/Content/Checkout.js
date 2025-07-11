@@ -5,8 +5,8 @@ import Toast from "./Toast";
 import axios from "axios";
 import Navbar from "./Navbar";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
 import PaymentBox from "./PaymentBox";
+import { Elements } from "@stripe/react-stripe-js";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -43,10 +43,9 @@ export default function CheckoutPage() {
     post_code: "",
     notes: "",
   });
-  const stripePromise = loadStripe("");
-  // const stripePromise = loadStripe(
-  //   process.env.STRIPE_PROMISE
-  // );
+  const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
+
   const [showPayment, setShowPayment] = useState(false);
 
   const handleSelect = (option) => {
