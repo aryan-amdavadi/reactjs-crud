@@ -6,6 +6,7 @@ function Products() {
   const [data, setData] = useState([]);
   const [cartData, setCartData] = useState([]);
   const [loadData, setLoadData] = useState(0);
+  const [openCart,setOpenCart] = useState(false)
   useEffect(() => {
     axios
       .get("http://localhost:8081/products")
@@ -32,6 +33,7 @@ function Products() {
   }, [loadData]);
 
   const handleAddCart = (data) => {
+    setOpenCart(false)
     if (localStorage.getItem("user_id") === null) {
       let cart = JSON.parse(localStorage.getItem("cart")) || {};
 
@@ -47,8 +49,9 @@ function Products() {
       }
 
       localStorage.setItem("cart", JSON.stringify(cart));
-      setCartData(Object.values(cart)); // Update state for rendering
+      setCartData(Object.values(cart)); 
       setLoadData((prev) => prev + 1);
+      setOpenCart(true)
       return; // Stop here, don't call the backend
     }
     const dataObject = { ...data };
@@ -59,6 +62,7 @@ function Products() {
       .post("http://localhost:8081/api/addcart", dataObject)
       .then((response) => {
         setLoadData((prev) => prev + 1);
+        setOpenCart(true)
       })
       .catch((error) => {
         console.log(error);
@@ -71,6 +75,7 @@ function Products() {
         .post("http://localhost:8081/carts", userObject)
         .then((res) => {
           setCartData(res.data)
+          setOpenCart(true)
         })
         .catch((err) => console.log(err));
     }
@@ -122,7 +127,7 @@ function Products() {
   };
   return (
     <>
-      <Navbar loadData={loadData} setLoadData={setLoadData} />
+      <Navbar loadData={loadData} setLoadData={setLoadData} openCart={openCart} />
       <div className="container">
         {data.map((data, i) => (
           <div className="card" key={i}>

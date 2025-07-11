@@ -7,6 +7,7 @@ const path = require("path");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
 const { isDate } = require("util");
+const stripe = require("stripe")(process.env.SECRET_KEY);
 
 const app = express();
 app.use(cors());
@@ -85,6 +86,33 @@ app.post("/api/forgot-password", async (req, res) => {
   } catch (error) {
     console.error("Error sending reset mail:", error);
     res.status(500).json({ message: "Error sending mail", error });
+  }
+});
+
+app.post("/create-payment-intent", async (req, res) => {
+  const { amount } = req.body;
+
+
+  if (!amount || amount < 100) {
+    // ❗ Return here to stop execution
+    return res
+      .status(400)
+      .send({ error: "Amount must be at least ₹1 (100 paise) to create payment intent." });
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: "inr",
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    return res.send({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    console.error("Stripe error:", err);
+    return res.status(500).send({ error: err.message });
   }
 });
 
@@ -425,95 +453,6 @@ app.post("/api/addcart", (req, res) => {
   });
 });
 
-app.post("/api/adddorder", (req, res) => {
-  const {
-    user_id,
-    user_details,
-    orderData,
-    discount_code,
-    discount_amount,
-    amount_paid,
-    time_frame,
-    shipping_cost,
-    notes,
-    product_price,
-  } = req.body;
-  const address = JSON.stringify;
-  const addOrderQuery = `
-    INSERT INTO orders (user_id, shipping_address, delivery_notes, shipping_method, shipping_cost, product_price, amount_paid)
-    VALUES (${user_id}, '${user_details}', '${notes}', '${time_frame}', ${shipping_cost}, ${product_price}, ${amount_paid})
-  `;
-
-  db.query(addOrderQuery, (error, result) => {
-    if (error) return res.status(500).json({ error });
-
-    const insertedOrderId = result.insertId;
-    const discountQuery = `INSERT INTO order_discounts (order_id, user_id, code, amount) VALUES (?, ?, ?, ?)`;
-    const updateDiscountQuery = `update discounts set usage_count = usage_count + 1 where code = '${discount_code}' and usage_limit != null`;
-    db.query(discountQuery, [discount_code], (error, data) => {
-      if (error) {
-        return res
-          .status(500)
-          .json({ error: "Failed to Update discount", detail: error });
-      }
-    });
-
-    db.query(
-      updatediscountquery,
-      [insertedOrderId, user_id, discount_code, discount_amount],
-      (error, data) => {
-        if (error) {
-          return res
-            .status(500)
-            .json({ error: "Failed to insert discount", detail: error });
-        }
-      }
-    );
-
-    let completedInserts = 0;
-    let hasError = false;
-
-    for (let i = 0; i < orderData.length; i++) {
-      const item = orderData[i];
-      const orderItemsQuery = `
-        INSERT INTO order_items (order_id, product_id, price, quantity)
-        VALUES (?, ?, ?, ?)
-      `;
-      db.query(
-        orderItemsQuery,
-        [insertedOrderId, item.product_id, item.price, item.quantity],
-        (err) => {
-          if (hasError) return;
-          if (err) {
-            hasError = true;
-            return res
-              .status(500)
-              .json({ error: "Failed to insert order items", detail: err });
-          }
-          completedInserts++;
-          if (completedInserts === orderData.length) {
-            const clearCartQuery = `delete from carts where user_id = ${user_id}`;
-            db.query(clearCartQuery, (clearErr) => {
-              if (clearErr) {
-                return res.status(500).json({
-                  success: false,
-                  error: "Failed to clear cart",
-                  detail: clearErr,
-                });
-              }
-              return res.json({
-                message: "Order and items inserted successfully",
-                order_id: insertedOrderId,
-                total_items: completedInserts,
-              });
-            });
-          }
-        }
-      );
-    }
-  });
-});
-
 app.post("/api/addorder", (req, res) => {
   const {
     user_id,
@@ -637,6 +576,119 @@ app.post("/api/addorder", (req, res) => {
     }
   );
 });
+
+
+app.post("/api/adsdorder", (req, res) => {
+  const {
+    user_id,
+    user_details,
+    orderData,
+    discount_code,
+    discount_amount,
+    amount_paid,
+    time_frame,
+    shipping_cost,
+    notes,
+    product_price,
+  } = req.body;
+
+  const addOrderQuery = `
+    INSERT INTO orders (user_id, shipping_address, delivery_notes, shipping_method, shipping_cost, product_price, amount_paid)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(
+    addOrderQuery,
+    [user_id, user_details, notes, time_frame, shipping_cost, product_price, amount_paid],
+    (error, result) => {
+      if (error) return res.status(500).json({ error });
+
+      const insertedOrderId = result.insertId;
+
+      const insertDiscount = (next) => {
+        if (!discount_code) return next(); 
+
+        const discountQuery = `
+          INSERT INTO order_discounts (order_id, user_id, code, amount)
+          VALUES (?, ?, ?, ?)
+        `;
+        db.query(discountQuery, [insertedOrderId, user_id, discount_code, discount_amount], (error) => {
+          if (error) {
+            res.status(500).json({ error: "Failed to insert discount", detail: error });
+            return;
+          }
+
+          const updateDiscountQuery = `
+            UPDATE discounts 
+            SET usage_count = usage_count + 1 
+            WHERE code = ? AND usage_limit IS NOT NULL
+          `;
+          db.query(updateDiscountQuery, [discount_code], (err) => {
+            if (err) {
+              res.status(500).json({ error: "Failed to update discount usage count", detail: err });
+              return;
+            }
+
+            next(); 
+          });
+        });
+      };
+
+      insertDiscount(() => {
+        if (orderData.length === 0) {
+          return res.json({
+            message: "Order inserted (no items)",
+            order_id: insertedOrderId,
+          });
+        }
+
+        let completed = 0;
+        let hasError = false;
+
+        for (let i = 0; i < orderData.length; i++) {
+          const item = orderData[i];
+          const itemQuery = `
+            INSERT INTO order_items (order_id, product_id, price, quantity)
+            VALUES (?, ?, ?, ?)
+          `;
+          db.query(itemQuery, [insertedOrderId, item.product_id, item.price, item.quantity], (err) => {
+            if (hasError) return; // already responded
+
+            if (err) {
+              hasError = true;
+              return res.status(500).json({
+                error: "Failed to insert order items",
+                detail: err,
+              });
+            }
+
+            completed++;
+            if (completed === orderData.length) {
+              const clearCartQuery = `DELETE FROM carts WHERE user_id = ?`;
+              db.query(clearCartQuery, [user_id], (clearErr) => {
+                if (clearErr) {
+                  return res.status(500).json({
+                    success: false,
+                    error: "Failed to clear cart",
+                    detail: clearErr,
+                  });
+                }
+
+                return res.json({
+                  message: "Order and items inserted successfully",
+                  order_id: insertedOrderId,
+                  total_items: completed,
+                });
+              });
+            }
+          });
+        }
+      });
+    }
+  );
+});
+
+
 
 app.post("/api/validatecoupon", (req, res) => {
   const { code, user_id, total, cartData } = req.body;

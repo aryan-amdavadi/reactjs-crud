@@ -1,0 +1,37 @@
+.tabster-payment-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  background: #f3f2ef;
+  padding: 2rem;
+}
+
+.tabster-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.tabster-title {
+  font-size: 1.8rem;
+  color: #345d43;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

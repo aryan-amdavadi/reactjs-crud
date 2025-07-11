@@ -4,6 +4,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Toast from "./Toast";
 import axios from "axios";
 import Navbar from "./Navbar";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import PaymentBox from "./PaymentBox";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -20,15 +23,16 @@ export default function CheckoutPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastTheme, setToastTheme] = useState("success");
   const [productData, setProductData] = useState([]);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [shippingOpen, setShippingOpen] = useState(false);
+  const [activeAccordion, setActiveAccordion] = useState(null); // values: 'login', 'shipping', 'payment'
   const [cartData, setCartData] = useState([]);
+  const [paymentDone, setPaymentDone] = useState(false);
   const [coupon, setCoupon] = useState(state?.couponCode);
   const [appliedCoupon, setAppliedCoupon] = useState(
     coupon === "" && state.amount === 0
       ? null
       : { code: coupon, amount: state.amount }
   );
+  const [clientSecret, setClientSecret] = useState("");
   const [discountedTotal, setDiscountedTotal] = useState(0);
   const [form, setForm] = useState({
     fullName: "",
@@ -39,6 +43,12 @@ export default function CheckoutPage() {
     post_code: "",
     notes: "",
   });
+  const stripePromise = loadStripe("");
+  // const stripePromise = loadStripe(
+  //   process.env.STRIPE_PROMISE
+  // );
+  const [showPayment, setShowPayment] = useState(false);
+
   const handleSelect = (option) => {
     setSelected(option.name);
     setShippingFee(option.shipping_cost);
@@ -46,13 +56,8 @@ export default function CheckoutPage() {
     setOpen(false);
   };
 
-  const toggleLogin = () => {
-    setLoginOpen((prev) => !prev);
-    setShippingOpen(false);
-  };
-  const toggleShipping = () => {
-    setShippingOpen((prev) => !prev);
-    setLoginOpen(false);
+  const toggleAccordion = (section) => {
+    setActiveAccordion((prev) => (prev === section ? null : section));
   };
   const totalPrice = cartData.reduce((total, item) => {
     return total + item.price * item.quantity;
@@ -97,11 +102,17 @@ export default function CheckoutPage() {
     if (!appliedCoupon) setDiscountedTotal(totalPrice);
   }, [totalPrice, appliedCoupon]);
 
-  const getFinalTotal = () => {
-    return shippingThreshold > totalPrice
-      ? discountedTotal + shippingFee
-      : discountedTotal;
-  };
+  const getFinalTotal = React.useCallback(() => {
+    if (paymentDone) return 0.0;
+    if (shippingThreshold > totalPrice) return discountedTotal + shippingFee;
+    return discountedTotal;
+  }, [
+    paymentDone,
+    shippingThreshold,
+    totalPrice,
+    discountedTotal,
+    shippingFee,
+  ]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -125,8 +136,11 @@ export default function CheckoutPage() {
       return updatedForm;
     });
   };
+
   const handleSubmit = (e) => {
+    setShowPayment(true);
     e.preventDefault();
+
     if (!selected && showTimeFrame) {
       setToastMessage("Select Timeframe");
       setToastTheme("danger");
@@ -138,7 +152,12 @@ export default function CheckoutPage() {
       setToastTheme("danger");
       setShowToast(true);
     }
-
+    if (getFinalTotal() !== 0) {
+      setToastMessage("Pay The Amount.");
+      setToastTheme("danger");
+      setShowToast(true);
+      setActiveAccordion("payment")
+    }
     const { notes, fullName, ...userData } = form;
     const fullname_part = form.fullName.split(" ", 2);
     const First_Name = fullname_part[0];
@@ -154,23 +173,32 @@ export default function CheckoutPage() {
       orderData: cartData,
       notes: form.notes,
       discount_code: coupon,
-      discount_amount:totalPrice-discountedTotal,
+      discount_amount: totalPrice - discountedTotal,
       amount_paid: getFinalTotal().toFixed(2),
       product_price: totalPrice.toFixed(2),
     };
-    console.log(dataObject);
     axios
       .post("http://localhost:8081/api/addorder", dataObject)
       .then((res) => {
-        setToastMessage("Order Successfull");
-        setToastTheme("success");
+        setToastMessage("Pay To Continue...");
+        setToastTheme("danger");
         setShowToast(true);
-        setTimeout(() => {
-          navigate("/menu");
-        }, 3500);
       })
       .catch((err) => {});
   };
+
+  useEffect(() => {
+    if (showPayment && !clientSecret) {
+      axios
+        .post("http://localhost:8081/create-payment-intent", {
+          amount: Math.round(getFinalTotal() * 100),
+        })
+        .then((res) => {
+          setClientSecret(res.data.clientSecret);
+        })
+        .catch((err) => console.error("Stripe error", err));
+    }
+  }, [showPayment, clientSecret, getFinalTotal]);
   const handleLogin = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -262,7 +290,10 @@ export default function CheckoutPage() {
           <div className="form-section">
             <form onSubmit={handleLogin} className="checkout-form" id="login">
               <div className="accordion-wrapper">
-                <div className="accordion-header" onClick={toggleLogin}>
+                <div
+                  className="accordion-header"
+                  onClick={() => toggleAccordion("login")}
+                >
                   <h3>
                     <i className="fa-solid fa-user"></i> Login{" "}
                     {!userId ? (
@@ -272,12 +303,18 @@ export default function CheckoutPage() {
                     )}
                   </h3>
                   <span
-                    className={`accordion-icon ${loginOpen ? "rotate" : ""}`}
+                    className={`accordion-icon ${
+                      activeAccordion === "login" ? "rotate" : ""
+                    }`}
                   >
                     &#9662;
                   </span>
                 </div>
-                <div className={`accordion-body ${loginOpen ? "open" : ""}`}>
+                <div
+                  className={`accordion-body ${
+                    activeAccordion === "login" ? "open" : ""
+                  }`}
+                >
                   <div className="mb-3 ">
                     <label htmlFor="exampleFormControlInput1" className="title">
                       Email Address
@@ -347,20 +384,25 @@ export default function CheckoutPage() {
               >
                 <h2 className="section-title">Delivery Details</h2>
                 <div className="accordion-wrapper">
-                  <div className="accordion-header" onClick={toggleShipping}>
+                  <div
+                    className="accordion-header"
+                    onClick={() => toggleAccordion("shipping")}
+                  >
                     <h3>
                       <i className="fa-solid fa-truck"></i> Shipping Info
                     </h3>
                     <span
                       className={`accordion-icon ${
-                        shippingOpen ? "rotate" : ""
+                        activeAccordion === "" ? "rotate" : ""
                       }`}
                     >
                       &#9662;
                     </span>
                   </div>
                   <div
-                    className={`accordion-body ${shippingOpen ? "open" : ""}`}
+                    className={`accordion-body ${
+                      activeAccordion === "shipping" ? "open" : ""
+                    }`}
                   >
                     <label className="title">Full Name</label>
                     <input
@@ -476,10 +518,65 @@ export default function CheckoutPage() {
                   placeholder="Additional Notes (Optional)"
                   className="input textarea"
                 />
+                <div className="accordion-wrapper">
+                  <div
+                    className="accordion-header"
+                    onClick={() => toggleAccordion("payment")}
+                  >
+                    <h3>
+                      <i className="fa-solid fa-credit-card"></i> Payment
+                    </h3>
+                    <span
+                      className={`accordion-icon ${
+                        activeAccordion === "payment" ? "rotate" : ""
+                      }`}
+                    >
+                      &#9662;
+                    </span>
+                  </div>
+                  <div
+                    className={`accordion-body ${
+                      activeAccordion === "payment" ? "open" : ""
+                    }`}
+                  >
+                    {showPayment ? (
+                      <>
+                        <h1>Payment</h1>
+                        {!clientSecret ? (
+                          <p>Loading payment info...</p>
+                        ) : (
+                          <Elements stripe={stripePromise}>
+                            <PaymentBox
+                              amount={getFinalTotal().toFixed(2)}
+                              clientSecret={clientSecret}
+                              onPaymentSuccess={(intent) => {
+                                setPaymentDone(true);
+                                setShowPayment(false);
+                                setToastMessage("Order Placed..");
+                                setToastTheme("success");
+                                setShowToast(true);
+                                setTimeout(() => {
+                                  navigate("/menu");
+                                }, 3500);
+                              }}
+                            />
+                          </Elements>
+                        )}
+                      </>
+                    ) : (
+                      "Fill The Details To Pay.."
+                    )}
+                  </div>
+                </div>
 
-                <div className="d-flex" style={{ height: "60px" }}>
+                <div
+                  style={{
+                    height: "60px",
+                    display: showPayment ? "none" : "flex",
+                  }}
+                >
                   <button type="submit" className="submit-btn">
-                    Place Order
+                    {paymentDone ? "Place Order" : "Procced To Pay"}
                   </button>
                   <button
                     className="back-btn"
@@ -588,7 +685,6 @@ export default function CheckoutPage() {
                     : "0.00"}
                 </span>
               </div>
-
               <div className="summary-row total">
                 <strong>Total Payable</strong>
                 <strong>₹{getFinalTotal().toFixed(2)}</strong>

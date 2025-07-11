@@ -4,7 +4,7 @@ import axios from "axios";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import CartPanel from "./Cart";
 
-function AppNavbar({ loadData, setLoadData,color}) {
+function AppNavbar({ loadData, setLoadData,color,openCart}) {
   const userId = localStorage.getItem("user_id");
   const [quantity, setQuantity] = useState([]);
   const navigate = useNavigate();
@@ -33,6 +33,13 @@ function AppNavbar({ loadData, setLoadData,color}) {
       setQuantity(totalQuantity);
     }
   }, [userId, loadData]);
+  useEffect(()=>{
+    if(openCart){
+      setShowCart(true)
+    }else{
+      setShowCart(false)
+    }
+  },[openCart])
   const [profiledata, setProfileData] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showCart, setShowCart] = useState(false);
