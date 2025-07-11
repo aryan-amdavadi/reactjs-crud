@@ -139,9 +139,8 @@ function Products() {
                 height={100}
                 width={100}
               />
-              <span className="badge">Sale</span>
+              {/* <span className="badge">Sale</span> */}
             </div>
-            <br />
             <h3>{data.description}</h3>
             <div className="nutrition"></div>
             <p className="price">${data.price}</p>

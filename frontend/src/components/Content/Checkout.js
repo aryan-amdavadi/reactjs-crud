@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Toast from "./Toast";
 import axios from "axios";
 import Navbar from "./Navbar";
@@ -11,8 +11,6 @@ import { Elements } from "@stripe/react-stripe-js";
 export default function CheckoutPage() {
   const navigate = useNavigate();
   var userId = localStorage.getItem("user_id");
-  const location = useLocation();
-  const { state } = location;
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [showTimeFrame, setShowTimeFrame] = useState(false);
@@ -23,15 +21,11 @@ export default function CheckoutPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastTheme, setToastTheme] = useState("success");
   const [productData, setProductData] = useState([]);
-  const [activeAccordion, setActiveAccordion] = useState(null); // values: 'login', 'shipping', 'payment'
+  const [activeAccordion, setActiveAccordion] = useState(null); 
   const [cartData, setCartData] = useState([]);
   const [paymentDone, setPaymentDone] = useState(false);
-  const [coupon, setCoupon] = useState(state?.couponCode);
-  const [appliedCoupon, setAppliedCoupon] = useState(
-    coupon === "" && state.amount === 0
-      ? null
-      : { code: coupon, amount: state.amount }
-  );
+  const [coupon, setCoupon] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
   const [discountedTotal, setDiscountedTotal] = useState(0);
   const [form, setForm] = useState({

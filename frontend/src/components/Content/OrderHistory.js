@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import Navbar from "./Navbar";
+import Modal from "react-bootstrap/Modal";
 
 export default function OrderHistoryPage() {
   const userId = localStorage.getItem("user_id");
@@ -11,6 +12,9 @@ export default function OrderHistoryPage() {
 
   const [editingOrder, setEditingOrder] = useState(null); // order object
   const [editedQuantities, setEditedQuantities] = useState({});
+
+  const [activeOrderId,setActiveOrderId] = useState(null)
+  const [modalDeleteOpen,setModalDeleteOpen]=useState(false)
 
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [discountData, setDiscountdata] = useState([]);
@@ -54,6 +58,12 @@ export default function OrderHistoryPage() {
       [productId]: 1,
     }));
   };
+  const handleDeleteContent = (id) =>{
+    setActiveOrderId(id)
+  }
+  const handleCancel = () => {
+    console.log(activeOrderId)
+  }
 
   const saveEditedOrder = async () => {
     console.log("Order Id", editingOrder.id);
@@ -144,6 +154,36 @@ export default function OrderHistoryPage() {
   return (
     <>
       <Navbar />
+      {modalDeleteOpen && (
+        <Modal show={true}>
+          <Modal.Header>
+            <div>Cancel Order.</div>
+            <div>
+              <button
+                type="button"
+                to="/"
+                onClick={() => {
+                  setModalDeleteOpen(false);
+                }}
+                className="btn btn-light"
+              >
+                X
+              </button>
+            </div>
+          </Modal.Header>
+          <Modal.Body>Remember It Cannot Be Backuped.</Modal.Body>
+          <Modal.Footer>
+            <button
+              type="button"
+              to="/"
+              onClick={handleCancel}
+              className="btn btn-outline-danger"
+            >
+              Cancel Order
+            </button>
+          </Modal.Footer>
+        </Modal>
+      )}
       <motion.div
         className="order-history-container"
         initial={{ opacity: 0 }}
@@ -182,6 +222,21 @@ export default function OrderHistoryPage() {
                         <strong>Total Paid:</strong> ₹{order.amount_paid}
                       </p>
                       <div className="d-flex">
+
+                        <button
+                          className="delete-btn"
+                          style={{
+                            display:
+                              expandedOrderId === order.id ? "none" : "block",
+                            marginRight: "25px",
+                          }}
+                          onClick={()=>{
+                            handleDeleteContent(order.id)
+                            setModalDeleteOpen(true)
+                          }}
+                        >
+                          Cancel Order
+                        </button>
                         <button
                           className="view-details-btn"
                           style={{

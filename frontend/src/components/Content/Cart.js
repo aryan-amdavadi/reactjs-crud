@@ -7,9 +7,6 @@ function CartPanel({ open, onClose, onCartChange }) {
   const userId = localStorage.getItem("user_id");
   const [cartData, setCartData] = useState([]);
   const [productData, setProductData] = useState([]);
-  const [couponCode, setCouponCode] = useState("");
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [couponError, setCouponError] = useState("");
   const panelRef = useRef();
   useEffect(() => {
     if (userId) {
@@ -107,28 +104,7 @@ function CartPanel({ open, onClose, onCartChange }) {
         .catch((err) => console.log(err));
     }
   };
-  const handleApplyCoupon = () => {
-    const trimmedCode = couponCode.trim().toUpperCase();
 
-    // Example: hardcoded coupon validation
-    if (trimmedCode === "TAB10") {
-      setDiscountPercent(10); // 10% discount
-      setCouponError("");
-    } else if (trimmedCode === "TAB20") {
-      setDiscountPercent(20); // 20% discount
-      setCouponError("");
-    } else {
-      setDiscountPercent(0);
-      setCouponError("Invalid coupon code.");
-    }
-  };
-  const removeCoupon = () => {
-    // Clear coupon logic (example):
-    setCouponCode("");
-    setDiscountPercent(0);
-  };
-
-  const discountedTotal = totalPrice - (totalPrice * discountPercent) / 100;
 
   return (
     <>
@@ -175,90 +151,17 @@ function CartPanel({ open, onClose, onCartChange }) {
             </div>
           ))}
         </div>
-        <div className="card-body" style={{ flex: "none" }}>
-          {" "}
-          <div
-            className="coupon-section d-flex"
-            style={{ flexDirection: "row" }}
-          >
-            <input
-              type="text"
-              placeholder="Enter coupon code"
-              value={couponCode}
-              style={{ width: "100%" }}
-              onChange={(e) => setCouponCode(e.target.value)}
-              className="coupon-input"
-            />
-            <button className="apply-coupon-btn" onClick={handleApplyCoupon}>
-              Apply
-            </button>
-          </div>
-          {couponError && (
-            <div className="coupon-error" style={{ marginLeft: "25px" }}>
-              {couponError}
-            </div>
-          )}
-          {discountPercent > 0 && (
-            <div className="coupon-success" style={{ marginLeft: "25px" }}>
-              🎉 {discountPercent}% discount applied!
-            </div>
-          )}
-        </div>
-
         <div className="cart-footer">
           <div
             className="cart-total"
             style={{ flexDirection: "column-reverse" }}
           >
-            {/* <strong>₹{totalPrice.toFixed(2)}</strong> */}
-            {discountPercent > 0 ? (
-              <>
-                <div className="price-table">
-                  <div className="price-row">
-                    <span className="price-label">Original Price</span>
-                    <span className="original-price">
-                      ₹{totalPrice.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="price-row discount-row">
-                    <span className="price-label">Discount</span>
-                    <div className="d-flex">
-                      <span className="discount-amount">
-                        – ₹{(totalPrice - discountedTotal).toFixed(2)}
-                      </span>
-                      <button
-                        className="remove-coupon-btn"
-                        onClick={removeCoupon}
-                      >
-                        ✖
-                      </button>
-                    </div>
-                  </div>
-                  <div className="price-row discount-row">
-                    <span className="price-label">Shipping Charges</span>
-                    <span className="discounted-price">₹ 0</span>
-                  </div>
-                  <div className="price-row total-row">
-                    <span className="price-label">Total Payable</span>
-                    <span className="discounted-price">
-                      ₹{discountedTotal.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </>
-            ) : (
               <strong>₹{totalPrice.toFixed(2)}</strong>
-            )}
           </div>
           <button
             className="checkout-btn"
             onClick={() => {
-              navigate("/checkout", {
-                state:{
-                  couponCode:couponCode,
-                  amount:totalPrice - discountedTotal
-                }
-              });
+              navigate("/checkout");
               onClose();
             }}
           >

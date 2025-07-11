@@ -7,7 +7,7 @@ const path = require("path");
 const nodemailer = require("nodemailer");
 const hbs = require("nodemailer-express-handlebars");
 const { isDate } = require("util");
-const stripe = require("stripe")(process.env.SECRET_KEY);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 app.use(cors());
@@ -39,6 +39,7 @@ const storage = multer.diskStorage({
     );
   },
 });
+
 const upload = multer({ storage });
 
 app.get("/", (req, res) => res.json("From Backend"));
@@ -92,12 +93,14 @@ app.post("/api/forgot-password", async (req, res) => {
 app.post("/create-payment-intent", async (req, res) => {
   const { amount } = req.body;
 
-
   if (!amount || amount < 100) {
     // ❗ Return here to stop execution
     return res
       .status(400)
-      .send({ error: "Amount must be at least ₹1 (100 paise) to create payment intent." });
+      .send({
+        error:
+          "Amount must be at least ₹1 (100 paise) to create payment intent.",
+      });
   }
 
   try {
@@ -209,7 +212,6 @@ app.post("/api/orders", (req, res) => {
   });
 });
 
-
 app.post("/discountdata", (req, res) => {
   const { user_id } = req.body;
   const sql = "SELECT * FROM order_discounts WHERE user_id = ?";
@@ -232,8 +234,6 @@ app.post("/orderdata", (req, res) => {
   });
 });
 
-
-
 app.post("/api/getproductsbyids", (req, res) => {
   const { ids } = req.body;
   const sql = `SELECT id, title FROM products WHERE id IN (${ids})`;
@@ -245,7 +245,6 @@ app.post("/api/getproductsbyids", (req, res) => {
   });
 });
 
-
 app.post("/api/getproductsname", (req, res) => {
   const { ids } = req.body;
   const sql = `SELECT id, title FROM products WHERE id = ${ids}`;
@@ -256,7 +255,6 @@ app.post("/api/getproductsname", (req, res) => {
     res.status(200).json(results);
   });
 });
-
 
 app.post("/api/getusersbyids", (req, res) => {
   const { ids } = req.body;
@@ -577,119 +575,6 @@ app.post("/api/addorder", (req, res) => {
   );
 });
 
-
-app.post("/api/adsdorder", (req, res) => {
-  const {
-    user_id,
-    user_details,
-    orderData,
-    discount_code,
-    discount_amount,
-    amount_paid,
-    time_frame,
-    shipping_cost,
-    notes,
-    product_price,
-  } = req.body;
-
-  const addOrderQuery = `
-    INSERT INTO orders (user_id, shipping_address, delivery_notes, shipping_method, shipping_cost, product_price, amount_paid)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  db.query(
-    addOrderQuery,
-    [user_id, user_details, notes, time_frame, shipping_cost, product_price, amount_paid],
-    (error, result) => {
-      if (error) return res.status(500).json({ error });
-
-      const insertedOrderId = result.insertId;
-
-      const insertDiscount = (next) => {
-        if (!discount_code) return next(); 
-
-        const discountQuery = `
-          INSERT INTO order_discounts (order_id, user_id, code, amount)
-          VALUES (?, ?, ?, ?)
-        `;
-        db.query(discountQuery, [insertedOrderId, user_id, discount_code, discount_amount], (error) => {
-          if (error) {
-            res.status(500).json({ error: "Failed to insert discount", detail: error });
-            return;
-          }
-
-          const updateDiscountQuery = `
-            UPDATE discounts 
-            SET usage_count = usage_count + 1 
-            WHERE code = ? AND usage_limit IS NOT NULL
-          `;
-          db.query(updateDiscountQuery, [discount_code], (err) => {
-            if (err) {
-              res.status(500).json({ error: "Failed to update discount usage count", detail: err });
-              return;
-            }
-
-            next(); 
-          });
-        });
-      };
-
-      insertDiscount(() => {
-        if (orderData.length === 0) {
-          return res.json({
-            message: "Order inserted (no items)",
-            order_id: insertedOrderId,
-          });
-        }
-
-        let completed = 0;
-        let hasError = false;
-
-        for (let i = 0; i < orderData.length; i++) {
-          const item = orderData[i];
-          const itemQuery = `
-            INSERT INTO order_items (order_id, product_id, price, quantity)
-            VALUES (?, ?, ?, ?)
-          `;
-          db.query(itemQuery, [insertedOrderId, item.product_id, item.price, item.quantity], (err) => {
-            if (hasError) return; // already responded
-
-            if (err) {
-              hasError = true;
-              return res.status(500).json({
-                error: "Failed to insert order items",
-                detail: err,
-              });
-            }
-
-            completed++;
-            if (completed === orderData.length) {
-              const clearCartQuery = `DELETE FROM carts WHERE user_id = ?`;
-              db.query(clearCartQuery, [user_id], (clearErr) => {
-                if (clearErr) {
-                  return res.status(500).json({
-                    success: false,
-                    error: "Failed to clear cart",
-                    detail: clearErr,
-                  });
-                }
-
-                return res.json({
-                  message: "Order and items inserted successfully",
-                  order_id: insertedOrderId,
-                  total_items: completed,
-                });
-              });
-            }
-          });
-        }
-      });
-    }
-  );
-});
-
-
-
 app.post("/api/validatecoupon", (req, res) => {
   const { code, user_id, total, cartData } = req.body;
   db.query(
@@ -751,7 +636,7 @@ app.post("/api/validatecoupon", (req, res) => {
               return res
                 .status(500)
                 .send({ valid: false, message: "Server error" });
-            if (Result.length!==0) {
+            if (Result.length !== 0) {
               return res.send({
                 valid: false,
                 message: "You have already used this coupoun.",
@@ -760,7 +645,7 @@ app.post("/api/validatecoupon", (req, res) => {
             validateDateAndRequirement();
           }
         );
-        return
+        return;
       }
 
       validateDateAndRequirement();
@@ -1112,6 +997,24 @@ app.delete("/api/clearcart", (req, res) => {
     else return res.json(data);
   });
 });
+
+app.delete("/api/cancelorder", (req, res) => {
+  const order_id = req.body.user_id;
+  const deleteQuery = `delete from orders where id = ${order_id}`;
+  db.query(deleteQuery, (error, data) => {
+    if (error) {return res.json(error)};
+    const order_discounts_query = `delete from order_discounts where order_id = ${order_id}`
+    db.query(order_discounts_query, (err,result)=>{
+      if(err){return res.json(err)}
+      const order_items_query = `delete from order_items where order_id = ${order_id}`
+      db.query(order_items_query, (e,res)=>{
+        if(e){return res.json(e)}
+      })
+    })
+    // else return res.json(data);
+  });
+});
+
 
 app.listen(8081, () => {
   console.log("Server listening on port 8081");

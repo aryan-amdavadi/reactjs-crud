@@ -477,7 +477,7 @@ input::placeholder {
 /* Modal Container */
 .modal-content {
   background: rgba(15, 32, 39, 0.85);
-  color: #1b3b2f;
+  color: var(--text-color);
   border-radius: 16px;
   border: 1px solid #3a4e5f;
   backdrop-filter: blur(10px);
@@ -2942,6 +2942,20 @@ HERO SECTION */ .hero {
 
 .view-details-btn:hover {
   background-color: #2d5242;
+}
+.delete-btn {
+  background-color: #bf3127;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.delete-btn:hover {
+  background-color: #d05757;
 }
 
 .order-details {
