@@ -6,10 +6,78 @@ import Navbar from "./Navbar";
 export default function OrderHistoryPage() {
   const userId = localStorage.getItem("user_id");
   const [orders, setOrders] = useState([]);
+
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const [editingOrder, setEditingOrder] = useState(null); // order object
+  const [editedQuantities, setEditedQuantities] = useState({});
+
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [discountData, setDiscountdata] = useState([]);
   const [orderDetails, setOrderDetails] = useState({});
   const [productsName, setProductsName] = useState({});
+
+  const openEditModal = (order) => {
+    const initialQuantities = {};
+    orderDetails[order.id]?.forEach((item) => {
+      initialQuantities[item.product_id] = item.quantity;
+    });
+    setEditedQuantities(initialQuantities);
+    setEditingOrder(order);
+  };
+
+  const closeEditModal = () => {
+    setEditingOrder(null);
+    setEditedQuantities({});
+  };
+
+  const handleQuantityChange = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
+    setEditedQuantities((prev) => ({
+      ...prev,
+      [productId]: newQuantity,
+    }));
+  };
+
+  const handleRemoveProduct = (productId) => {
+    setEditedQuantities((prev) => {
+      const updated = { ...prev };
+      delete updated[productId];
+      return updated;
+    });
+  };
+
+  const handleAddProduct = (productId) => {
+    if (!productId) return;
+    setEditedQuantities((prev) => ({
+      ...prev,
+      [productId]: 1,
+    }));
+  };
+
+  const saveEditedOrder = async () => {
+    console.log("Order Id", editingOrder.id);
+    console.log("Content", editedQuantities);
+    try {
+      await axios.post(`http://localhost:8081/api/updateorderitems`, {
+        order_id: editingOrder.id,
+        items: editedQuantities,
+      });
+
+      const res = await axios.post(`http://localhost:8081/orderdata`, {
+        order_id: editingOrder.id,
+      });
+
+      setOrderDetails((prev) => ({
+        ...prev,
+        [editingOrder.id]: res.data,
+      }));
+
+      closeEditModal();
+    } catch (err) {
+      console.error("Error updating order:", err);
+    }
+  };
 
   useEffect(() => {
     axios
@@ -59,7 +127,7 @@ export default function OrderHistoryPage() {
             productNameMap[item.id] = item.title;
           });
 
-          setProductsName(productNameMap); // update once
+          setProductsName(productNameMap); 
           setOrderDetails(details);
         } catch (err) {
           console.error("Error fetching order details or product names:", err);
@@ -113,14 +181,28 @@ export default function OrderHistoryPage() {
                       <p>
                         <strong>Total Paid:</strong> ₹{order.amount_paid}
                       </p>
-                      <button
-                        className="view-details-btn"
-                        onClick={() => toggleDetails(order.id)}
-                      >
-                        {expandedOrderId === order.id
-                          ? "Hide Details"
-                          : "View Details"}
-                      </button>
+                      <div className="d-flex">
+                        <button
+                          className="view-details-btn"
+                          style={{
+                            display:
+                              expandedOrderId === order.id ? "block" : "none",
+                            marginRight: "25px",
+                          }}
+                          onClick={() => openEditModal(order)}
+                        >
+                          Edit Order
+                        </button>
+
+                        <button
+                          className="view-details-btn"
+                          onClick={() => toggleDetails(order.id)}
+                        >
+                          {expandedOrderId === order.id
+                            ? "Hide Details"
+                            : "View Details"}
+                        </button>
+                      </div>
                     </div>
 
                     {expandedOrderId === order.id && (
@@ -226,6 +308,101 @@ export default function OrderHistoryPage() {
           </div>
         )}
       </motion.div>
+      {editingOrder && (
+        <div className="modal-overlay">
+          <motion.div
+            className="modal-content enhanced-modal"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <h3>Edit Order #{editingOrder.id}</h3>
+
+            <ul className="edit-list">
+              {Object.entries(editedQuantities).map(
+                ([productId, quantity], index) => (
+                  <>
+                    <li key={index} className="edit-item">
+                      <button
+                      className="remove-product"
+                      onClick={() => handleRemoveProduct(productId)}
+                    >
+                      ×
+                    </button>
+                      <span>{productsName[productId]}</span>
+                      <div className="edit-controls">
+                        <div className="edit-controls">
+                          <button
+                            className="quantity-btn"
+                            onClick={() =>
+                              handleQuantityChange(
+                                productId,
+                                (quantity || 1) - 1
+                              )
+                            }
+                            disabled={quantity <= 1}
+                          >
+                            −
+                          </button>
+                          <span className="quantity-display">{quantity}</span>
+                          <button
+                            className="quantity-btn"
+                            onClick={() =>
+                              handleQuantityChange(
+                                productId,
+                                (quantity || 1) + 1
+                              )
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                    
+                  </>
+                )
+              )}
+            </ul>
+
+            <div className="custom-dropdown">
+              <div
+                className="dropdown-toggle"
+                onClick={() => setShowDropdown((prev) => !prev)}
+              >
+                + Add Product
+              </div>
+              {showDropdown && (
+                <ul className="dropdown-options">
+                  {Object.entries(productsName)
+                    .filter(([id]) => !(id in editedQuantities))
+                    .map(([id, title]) => (
+                      <li
+                        key={id}
+                        className="dropdown-option"
+                        onClick={() => {
+                          handleAddProduct(id);
+                          setShowDropdown(false);
+                        }}
+                      >
+                        {title}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="modal-buttons">
+              <button className="save-btn" onClick={saveEditedOrder}>
+                Save Changes
+              </button>
+              <button className="cancel-btn" onClick={closeEditModal}>
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </>
   );
 }

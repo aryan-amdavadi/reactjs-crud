@@ -43,8 +43,9 @@ export default function CheckoutPage() {
     post_code: "",
     notes: "",
   });
-  const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-
+  const stripePromise = loadStripe(
+    process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
+  );
 
   const [showPayment, setShowPayment] = useState(false);
 
@@ -152,10 +153,7 @@ export default function CheckoutPage() {
       setShowToast(true);
     }
     if (getFinalTotal() !== 0) {
-      setToastMessage("Pay The Amount.");
-      setToastTheme("danger");
-      setShowToast(true);
-      setActiveAccordion("payment")
+      setActiveAccordion("payment");
     }
     const { notes, fullName, ...userData } = form;
     const fullname_part = form.fullName.split(" ", 2);
@@ -517,57 +515,7 @@ export default function CheckoutPage() {
                   placeholder="Additional Notes (Optional)"
                   className="input textarea"
                 />
-                <div className="accordion-wrapper">
-                  <div
-                    className="accordion-header"
-                    onClick={() => toggleAccordion("payment")}
-                  >
-                    <h3>
-                      <i className="fa-solid fa-credit-card"></i> Payment
-                    </h3>
-                    <span
-                      className={`accordion-icon ${
-                        activeAccordion === "payment" ? "rotate" : ""
-                      }`}
-                    >
-                      &#9662;
-                    </span>
-                  </div>
-                  <div
-                    className={`accordion-body ${
-                      activeAccordion === "payment" ? "open" : ""
-                    }`}
-                  >
-                    {showPayment ? (
-                      <>
-                        <h1>Payment</h1>
-                        {!clientSecret ? (
-                          <p>Loading payment info...</p>
-                        ) : (
-                          <Elements stripe={stripePromise}>
-                            <PaymentBox
-                              amount={getFinalTotal().toFixed(2)}
-                              clientSecret={clientSecret}
-                              onPaymentSuccess={(intent) => {
-                                setPaymentDone(true);
-                                setShowPayment(false);
-                                setToastMessage("Order Placed..");
-                                setToastTheme("success");
-                                setShowToast(true);
-                                setTimeout(() => {
-                                  navigate("/menu");
-                                }, 3500);
-                              }}
-                            />
-                          </Elements>
-                        )}
-                      </>
-                    ) : (
-                      "Fill The Details To Pay.."
-                    )}
-                  </div>
-                </div>
-
+               
                 <div
                   style={{
                     height: "60px",
@@ -587,6 +535,58 @@ export default function CheckoutPage() {
                   </button>
                 </div>
               </form>
+
+               <div className="accordion-wrapper" style={{display:showPayment?"block":"none"}}>
+                <div
+                  className="accordion-header"
+                  onClick={() => toggleAccordion("payment")}
+                >
+                  <h3>
+                    <i className="fa-solid fa-credit-card"></i> Payment
+                  </h3>
+                  <span
+                    className={`accordion-icon ${
+                      activeAccordion === "payment" ? "rotate" : ""
+                    }`}
+                  >
+                    &#9662;
+                  </span>
+                </div>
+                <div
+                  className={`accordion-body ${
+                    activeAccordion === "payment" ? "open" : ""
+                  }`}
+                >
+                  {showPayment ? (
+                    <>
+                      <h1>Payment</h1>
+                      {!clientSecret ? (
+                        <p>Loading payment info...</p>
+                      ) : (
+                        <Elements stripe={stripePromise}>
+                          <PaymentBox
+                            amount={getFinalTotal().toFixed(2)}
+                            clientSecret={clientSecret}
+                            onPaymentSuccess={(intent) => {
+                              setPaymentDone(true);
+                              setShowPayment(false);
+                              setToastMessage("Order Placed..");
+                              setToastTheme("success");
+                              setShowToast(true);
+                              setTimeout(() => {
+                                navigate("/menu");
+                              }, 3500);
+                            }}
+                          />
+                        </Elements>
+                      )}
+                    </>
+                  ) : (
+                    "Fill The Details To Pay.."
+                  )}
+                </div>
+              </div>
+              
             </div>
           </div>
 
