@@ -24,7 +24,7 @@ const ELEMENT_OPTIONS = {
   },
 };
 
-export default function PaymentBox({ amount, clientSecret, onPaymentSuccess }) {
+export default function PaymentBox({ amount, clientSecret, onPaymentSuccess, width }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -66,7 +66,7 @@ export default function PaymentBox({ amount, clientSecret, onPaymentSuccess }) {
       transition={{ duration: 0.5 }}
       style={{
         backgroundColor: "#ffffff",
-        width: "660px",
+        width: width,
         borderRadius: "20px",
         maxWidth: "1000px",
         margin: "40px auto",
@@ -175,4 +175,5 @@ const inputWrapperStyle = {
   borderRadius: "10px",
   border: "1px solid #ccc",
   backgroundColor: "#f9f9f9",
+  marginBottom:"15px"
 };

@@ -560,6 +560,7 @@ export default function CheckoutPage() {
                           <PaymentBox
                             amount={getFinalTotal().toFixed(2)}
                             clientSecret={clientSecret}
+                            width="660px"
                             onPaymentSuccess={(intent) => {
                               setPaymentDone(true);
                               setShowPayment(false);

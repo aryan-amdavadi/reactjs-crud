@@ -3,6 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./EditOrder.css";
 import axios from "axios";
 import Toast from "./Toast";
+import PaymentBox from "./PaymentBox";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 
 export default function EditOrderPage() {
   const location = useLocation();
@@ -13,6 +16,15 @@ export default function EditOrderPage() {
   const [data, setData] = useState([]);
   const [shippingData, setShippingData] = useState([]);
   const shipping_address = JSON.parse(order.shipping_address);
+  ///////////////////////////////////////////////////////////////////
+
+  const stripePromise = loadStripe(
+    process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
+  );
+  const [clientSecret, setClientSecret] = useState("");
+  const [showPaymentAccordion, setShowPaymentAccordion] = useState(false);
+  const [showAccordion, setShowAccordion] = useState(false);
+  const [showRefundAccordion, setShowRefundAccordion] = useState(false);
   ///////////////////////////////////////////////////////////////////
 
   const [toastMessage, setToastMessage] = useState("");
@@ -239,7 +251,21 @@ export default function EditOrderPage() {
     }
   }, [quantities, data.length, validatecoupon]);
   ///////////////////////////////////////////////////////////////////
-
+  useEffect(() => {
+    if (!clientSecret) {
+      axios
+        .post("http://localhost:8081/create-payment-intent", {
+          amount: Math.round(
+            (discountedTotal + shippingFee - amountPaid).toFixed(2) * 100
+          ),
+        })
+        .then((res) => {
+          setClientSecret(res.data.clientSecret);
+        })
+        .catch((err) => console.error("Stripe error", err));
+    }
+  }, [amountPaid, clientSecret, discountedTotal, shippingFee]);
+  ///////////////////////////////////////////////////////////////////
   return (
     <>
       {showToast && (
@@ -405,12 +431,11 @@ export default function EditOrderPage() {
                 <span>₹{shippingFee.toFixed(2)}</span>
               </div>
 
-
               <hr className="summary-divider" />
 
               <div className="breakdown-row total">
                 <span>Paid By Customer.</span>
-                <span>₹{(amountPaid).toFixed(2)}</span>
+                <span>₹{amountPaid.toFixed(2)}</span>
               </div>
             </div>
 
@@ -464,9 +489,85 @@ export default function EditOrderPage() {
                 </span>
               </div>
 
-              <button className="update-btn" onClick={updateOrder}>
+              <button
+                className="update-btn"
+                onClick={() => {
+                  if (
+                    Number((discountedTotal + shippingFee - amountPaid).toFixed(2)) !==
+                    0
+                  ) {
+                    setShowAccordion(true);
+                  }
+                }}
+              >
                 Update Order
               </button>
+              <div
+                className="accordion-wrapper"
+                style={{
+                  marginTop: "30px",
+                  display: showAccordion ? "block" : "none",
+                }}
+              >
+                <div
+                  className="accordion-header"
+                  onClick={() => {
+                    if(Number((discountedTotal + shippingFee - amountPaid).toFixed(2))>0){
+                      setShowPaymentAccordion(!showPaymentAccordion)
+                    }else{
+                      setShowRefundAccordion(!showRefundAccordion)
+                    }
+                  }}
+                >
+                  <h3>
+                    <i className="fa-solid fa-credit-card"></i> Payment
+                  </h3>
+                  <span
+                    className={`accordion-icon ${
+                      showPaymentAccordion ? "rotate" : ""
+                    }`}
+                  >
+                    &#9662;
+                  </span>
+                </div>
+                <div
+                  className={`accordion-body ${
+                    showPaymentAccordion ? "open" : ""
+                  }`}
+                >
+                  {(discountedTotal + shippingFee - amountPaid).toFixed(2) >
+                  0 ? (
+                    <>
+                      {!clientSecret ? (
+                        <p>Loading payment info...</p>
+                      ) : (
+                        <Elements stripe={stripePromise}>
+                          <PaymentBox
+                            width="200px"
+                            amount={(
+                              discountedTotal +
+                              shippingFee -
+                              amountPaid
+                            ).toFixed(2)}
+                            clientSecret={clientSecret}
+                            onPaymentSuccess={(intent) => {
+                              setShowPaymentAccordion(false);
+                              setToastMessage("Order Placed..");
+                              setToastTheme("success");
+                              setShowToast(true);
+                              setTimeout(() => {
+                                navigate("/history");
+                              }, 3500);
+                            }}
+                          />
+                        </Elements>
+                      )}
+                    </>
+                  ) : (
+                    "Everything's Fine"
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
