@@ -13,6 +13,7 @@ import ProfilePage from "./components/Content/Profile";
 import OrderHistoryPage from "./components/Content/OrderHistory";
 import DiscountLayout from "./components/Admin/DiscountLayout"
 import DiscountAdd from "./components/Admin/DiscountAdd"
+import EditOrderPage from "./components/Content/EditOrder";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/history" element={<OrderHistoryPage />}/>
           <Route path="/discount" element={<DiscountLayout />}/>
           <Route path="/adddiscount" element={<DiscountAdd />}/>
+          <Route path="/editorder" element={<EditOrderPage />}/>
         </Routes>
       </Router>
     </>

@@ -66,7 +66,7 @@ export default function PaymentBox({ amount, clientSecret, onPaymentSuccess }) {
       transition={{ duration: 0.5 }}
       style={{
         backgroundColor: "#ffffff",
-        width: "560px",
+        width: "660px",
         borderRadius: "20px",
         maxWidth: "1000px",
         margin: "40px auto",

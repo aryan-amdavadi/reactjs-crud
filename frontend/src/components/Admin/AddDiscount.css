@@ -28,7 +28,7 @@
 body {
   background: var(--tabster-bg);
   font-family: "Segoe UI", sans-serif;
-  color: var(--text-primary);
+  /* color: var(--text-primary); */
 }
 
 .tabster-discount-page {
@@ -490,7 +490,6 @@ input[type="checkbox"]:checked {
   background: var(--tabster-accent);
 }
 label {
-  margin-left: 10px;
   margin-bottom: 8px;
 }
 .selected-product-list {
@@ -519,7 +518,6 @@ label {
 
 /* Remove button inside chip */
 .remove-btn {
-  position: absolute;
   right: 8px;
   top: 50%;
   transform: translateY(-50%);

@@ -2,7 +2,6 @@ body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
   background-color: #f4f6f8;
-  color: #333;
 }
 .extraLarge {
   width: 100%;
@@ -275,7 +274,6 @@ html {
 }
 body {
   background: var(--gradient-bg);
-  color: var(--text-color);
 }
 .container-xl {
   padding: 20px;
@@ -756,7 +754,6 @@ tr:hover {
 body {
   background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
   font-family: "Segoe UI", sans-serif;
-  color: var(--text-light);
   margin: 0;
   padding: 0;
 }
@@ -940,7 +937,6 @@ body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
   background: var(--background);
-  color: var(--text);
   overflow-x: hidden;
 }
 /* ========== HERO SECTION ========== */
@@ -1244,6 +1240,7 @@ input[type="text"] {
   z-index: 99;
 }
 .profile-dropdown-wrapper:hover .profile-dropdown {
+  margin-top: -2px;
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
@@ -2257,7 +2254,7 @@ body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
   background-color: var(--bg);
-  color: var(--text);
+  /* color: var(--text); */
 }
 
 HERO SECTION */ .hero {
@@ -2345,6 +2342,7 @@ HERO SECTION */ .hero {
 }
 
 .about p {
+  color: whitesmoke;
   font-size: 1.1rem;
   max-width: 800px;
   margin: 0 auto;

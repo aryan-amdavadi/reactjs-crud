@@ -890,6 +890,90 @@ app.post("/api/editdiscount", (req, res) => {
   });
 });
 
+app.post("/api/updateorder", (req, res) => {
+  const {
+    order_id,
+    items,
+    shipping_method,
+    shipping_cost,
+    product_price,
+    amount_paid,
+    discount_code,
+    discount_amount
+  } = req.body;
+
+  if (!order_id || !items || Object.keys(items).length === 0) {
+    return res.status(400).json({ error: "Missing order data" });
+  }
+
+  // Step 1: Delete existing order_items
+  const deleteItemsQuery = `DELETE FROM order_items WHERE order_id = ?`;
+  db.query(deleteItemsQuery, [order_id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: "Failed to delete old items", detail: err });
+    }
+
+    // Step 2: Insert new order items
+    const values = Object.entries(items).map(([productId, quantity]) => [
+      order_id,
+      parseInt(productId),
+      `select price from products where id = ${productId}`, 
+      quantity,
+    ]);
+
+    const insertQuery = `
+      INSERT INTO order_items (order_id, product_id, price, quantity)
+      VALUES ?
+    `;
+
+    db.query(insertQuery, [values], (err) => {
+      if (err) {
+        return res.status(500).json({ error: "Failed to insert updated items", detail: err });
+      }
+
+      // Step 3: Update order meta info
+      const updateOrderQuery = `
+        UPDATE orders 
+        SET shipping_method = ?, shipping_cost = ?, product_price = ?, amount_paid = ?
+        WHERE id = ?
+      `;
+      db.query(
+        updateOrderQuery,
+        [shipping_method, shipping_cost, product_price, amount_paid, order_id],
+        (err) => {
+          if (err) {
+            return res.status(500).json({ error: "Failed to update order info", detail: err });
+          }
+
+          // Step 4: Optionally update discount
+          if (discount_code) {
+            const updateDiscountQuery = `
+              UPDATE order_discounts set amount = ? WHERE order_id = ?
+            `;
+            db.query(
+              updateDiscountQuery,
+              [discount_amount,order_id],
+              (err) => {
+                if (err) {
+                  return res.status(500).json({
+                    error: "Failed to update discount",
+                    detail: err,
+                  });
+                }
+
+                return res.json({ success: true, message: "Order updated with discount" });
+              }
+            );
+          } else {
+            return res.json({ success: true, message: "Order updated" });
+          }
+        }
+      );
+    });
+  });
+});
+
+
 app.post("/api/quantity", (req, res) => {
   const product_id = req.body.product_id;
   const quantity = req.body.quantity;

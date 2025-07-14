@@ -3,8 +3,10 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import Navbar from "./Navbar";
 import Modal from "react-bootstrap/Modal";
+import { useNavigate } from "react-router-dom";
 
 export default function OrderHistoryPage() {
+  const navigate = useNavigate();
   const userId = localStorage.getItem("user_id");
   const [orders, setOrders] = useState([]);
 
@@ -13,21 +15,25 @@ export default function OrderHistoryPage() {
   const [editingOrder, setEditingOrder] = useState(null); // order object
   const [editedQuantities, setEditedQuantities] = useState({});
 
-  const [activeOrderId,setActiveOrderId] = useState(null)
-  const [modalDeleteOpen,setModalDeleteOpen]=useState(false)
+  const [activeOrder, setActiveOrder] = useState(null);
+  const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
 
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [discountData, setDiscountdata] = useState([]);
   const [orderDetails, setOrderDetails] = useState({});
   const [productsName, setProductsName] = useState({});
-
   const openEditModal = (order) => {
     const initialQuantities = {};
     orderDetails[order.id]?.forEach((item) => {
       initialQuantities[item.product_id] = item.quantity;
     });
-    setEditedQuantities(initialQuantities);
-    setEditingOrder(order);
+    navigate("/editorder", {
+      state: {
+        initialQuantities: initialQuantities,
+        orderDetails: order,
+        discountData: discountData.find((d) => d.order_id === order.id),
+      },
+    });
   };
 
   const closeEditModal = () => {
@@ -58,12 +64,12 @@ export default function OrderHistoryPage() {
       [productId]: 1,
     }));
   };
-  const handleDeleteContent = (id) =>{
-    setActiveOrderId(id)
-  }
+  const handleDeleteContent = (orderDetails) => {
+    setActiveOrder(orderDetails);
+  };
   const handleCancel = () => {
-    console.log(activeOrderId)
-  }
+    console.log(activeOrder);
+  };
 
   const saveEditedOrder = async () => {
     console.log("Order Id", editingOrder.id);
@@ -137,7 +143,7 @@ export default function OrderHistoryPage() {
             productNameMap[item.id] = item.title;
           });
 
-          setProductsName(productNameMap); 
+          setProductsName(productNameMap);
           setOrderDetails(details);
         } catch (err) {
           console.error("Error fetching order details or product names:", err);
@@ -222,7 +228,6 @@ export default function OrderHistoryPage() {
                         <strong>Total Paid:</strong> ₹{order.amount_paid}
                       </p>
                       <div className="d-flex">
-
                         <button
                           className="delete-btn"
                           style={{
@@ -230,9 +235,9 @@ export default function OrderHistoryPage() {
                               expandedOrderId === order.id ? "none" : "block",
                             marginRight: "25px",
                           }}
-                          onClick={()=>{
-                            handleDeleteContent(order.id)
-                            setModalDeleteOpen(true)
+                          onClick={() => {
+                            handleDeleteContent(order);
+                            setModalDeleteOpen(true);
                           }}
                         >
                           Cancel Order
@@ -379,11 +384,11 @@ export default function OrderHistoryPage() {
                   <>
                     <li key={index} className="edit-item">
                       <button
-                      className="remove-product"
-                      onClick={() => handleRemoveProduct(productId)}
-                    >
-                      ×
-                    </button>
+                        className="remove-product"
+                        onClick={() => handleRemoveProduct(productId)}
+                      >
+                        ×
+                      </button>
                       <span>{productsName[productId]}</span>
                       <div className="edit-controls">
                         <div className="edit-controls">
@@ -414,7 +419,6 @@ export default function OrderHistoryPage() {
                         </div>
                       </div>
                     </li>
-                    
                   </>
                 )
               )}

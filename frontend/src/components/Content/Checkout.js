@@ -210,7 +210,6 @@ export default function CheckoutPage() {
   };
   const applyCoupon = () => {
     if (!coupon.trim()) return;
-
     axios
       .post("http://localhost:8081/api/validatecoupon", {
         code: coupon,
