@@ -95,12 +95,9 @@ app.post("/create-payment-intent", async (req, res) => {
 
   if (!amount || amount < 100) {
     // ❗ Return here to stop execution
-    return res
-      .status(400)
-      .send({
-        error:
-          "Amount must be at least ₹1 (100 paise) to create payment intent.",
-      });
+    return res.status(400).send({
+      error: "Amount must be at least ₹1 (100 paise) to create payment intent.",
+    });
   }
 
   try {
@@ -117,6 +114,40 @@ app.post("/create-payment-intent", async (req, res) => {
     console.error("Stripe error:", err);
     return res.status(500).send({ error: err.message });
   }
+});
+
+app.post("/create-refund-intent", async (req, res) => {
+  const { payment_intent_id, amount } = req.body;
+
+  try {
+    const refund = await stripe.refunds.create({
+      payment_intent: payment_intent_id,
+      amount: Math.round(amount * 100),
+    });
+
+    res.json({ success: true, refund });
+  } catch (error) {
+    console.error("Refund error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post("/api/save-payment-intent", (req, res) => {
+  const { order_id, payment_intent_id, amount_paid, refund_amount } = req.body;
+
+  const query = `INSERT INTO order_payments (order_id, payment_id, amount, refunded_amount) VALUES(?,?,?,?)`;
+
+  db.query(
+    query,
+    [order_id, payment_intent_id, amount_paid, refund_amount],
+    (err, result) => {
+      if (err) {
+        console.error("Error saving intent ID:", err);
+        return res.status(500).json({ success: false, message: "DB error" });
+      }
+      res.json({ success: true, message: "Payment intent saved" });
+    }
+  );
 });
 
 // Get users
@@ -259,6 +290,17 @@ app.post("/api/getproductsname", (req, res) => {
 app.post("/api/getusersbyids", (req, res) => {
   const { ids } = req.body;
   const sql = `SELECT Emp_Id, First_Name, Last_Name FROM emp WHERE Emp_Id IN (${ids})`;
+  db.query(sql, (error, results) => {
+    if (error) return res.status(500).json({ error });
+    if (results.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+    res.status(200).json(results);
+  });
+});
+
+app.post("/api/getintentid", (req, res) => {
+  const { order_id } = req.body;
+  const sql = `SELECT payment_id FROM order_payments WHERE order_id = ${order_id}`;
   db.query(sql, (error, results) => {
     if (error) return res.status(500).json({ error });
     if (results.length === 0)
@@ -577,6 +619,9 @@ app.post("/api/addorder", (req, res) => {
 
 app.post("/api/validatecoupon", (req, res) => {
   const { code, user_id, total, cartData } = req.body;
+  if(code===undefined){
+    return res.send(null)
+  }
   db.query(
     `SELECT * FROM discounts WHERE code = '${code}' AND enabled = 1`,
     (err, results) => {
@@ -895,11 +940,15 @@ app.post("/api/updateorder", (req, res) => {
     order_id,
     items,
     shipping_method,
-    shipping_cost,
     product_price,
     amount_paid,
     discount_code,
-    discount_amount
+    shipping_cost,//
+    discountedTotal,//
+    amountPaid,//
+    discount_amount,
+    payment_intent_id,
+    type
   } = req.body;
 
   if (!order_id || !items || Object.keys(items).length === 0) {
@@ -910,14 +959,16 @@ app.post("/api/updateorder", (req, res) => {
   const deleteItemsQuery = `DELETE FROM order_items WHERE order_id = ?`;
   db.query(deleteItemsQuery, [order_id], (err) => {
     if (err) {
-      return res.status(500).json({ error: "Failed to delete old items", detail: err });
+      return res
+        .status(500)
+        .json({ error: "Failed to delete old items", detail: err });
     }
 
     // Step 2: Insert new order items
     const values = Object.entries(items).map(([productId, quantity]) => [
       order_id,
       parseInt(productId),
-      `select price from products where id = ${productId}`, 
+      `select price from products where id = ${productId}`,
       quantity,
     ]);
 
@@ -928,7 +979,9 @@ app.post("/api/updateorder", (req, res) => {
 
     db.query(insertQuery, [values], (err) => {
       if (err) {
-        return res.status(500).json({ error: "Failed to insert updated items", detail: err });
+        return res
+          .status(500)
+          .json({ error: "Failed to insert updated items", detail: err });
       }
 
       // Step 3: Update order meta info
@@ -942,7 +995,9 @@ app.post("/api/updateorder", (req, res) => {
         [shipping_method, shipping_cost, product_price, amount_paid, order_id],
         (err) => {
           if (err) {
-            return res.status(500).json({ error: "Failed to update order info", detail: err });
+            return res
+              .status(500)
+              .json({ error: "Failed to update order info", detail: err });
           }
 
           // Step 4: Optionally update discount
@@ -952,7 +1007,7 @@ app.post("/api/updateorder", (req, res) => {
             `;
             db.query(
               updateDiscountQuery,
-              [discount_amount,order_id],
+              [discount_amount, order_id],
               (err) => {
                 if (err) {
                   return res.status(500).json({
@@ -960,10 +1015,39 @@ app.post("/api/updateorder", (req, res) => {
                     detail: err,
                   });
                 }
-
-                return res.json({ success: true, message: "Order updated with discount" });
+                // Step 5: Update Payment Intent ID
+                if(type==="Payment"){
+                  const IntentPaymentQuery = `UPDATE order_payments SET payment_id = ?, amount= ? WHERE order_id = ?`;
+                db.query(
+                  IntentPaymentQuery,
+                  [payment_intent_id,(discountedTotal+shipping_cost-amountPaid), order_id],
+                  (eror) => {
+                    if (eror) {
+                      return res.status(500).json({
+                        error: "Failed to update Payment Intent Id.",
+                        detail: eror,
+                      });
+                    }
+                    return res.json({ success: true, message: "Order updated" });
+                  }
+                );
+              }else if(type==="Refund"){
+                const IntentRefundQuery = `UPDATE order_payments SET amount = null, refunded_amount=? WHERE order_id = ?`;
+                db.query(
+                  IntentRefundQuery,
+                  [(discountedTotal+shipping_cost-amountPaid), order_id],
+                  (eror) => {
+                    if (eror) {
+                      return res.status(500).json({
+                        error: "Failed to update Payment Intent Id.",
+                        detail: eror,
+                      });
+                    }
+                    return res.json({ success: true, message: "Order updated" });
+                  }
+                );
               }
-            );
+            });
           } else {
             return res.json({ success: true, message: "Order updated" });
           }
@@ -972,7 +1056,6 @@ app.post("/api/updateorder", (req, res) => {
     });
   });
 });
-
 
 app.post("/api/quantity", (req, res) => {
   const product_id = req.body.product_id;
@@ -1016,8 +1099,6 @@ app.post("/api/searchuser", (req, res) => {
 
 app.delete("/api/deleteemployee", (req, res) => {
   const EmpId = req.body.Emp_Id;
-
-  // console.log(req);
 
   const deleteQuery = `delete from emp where Emp_Id = ${EmpId}`;
   db.query(deleteQuery, (error, data) => {
@@ -1086,19 +1167,24 @@ app.delete("/api/cancelorder", (req, res) => {
   const order_id = req.body.user_id;
   const deleteQuery = `delete from orders where id = ${order_id}`;
   db.query(deleteQuery, (error, data) => {
-    if (error) {return res.json(error)};
-    const order_discounts_query = `delete from order_discounts where order_id = ${order_id}`
-    db.query(order_discounts_query, (err,result)=>{
-      if(err){return res.json(err)}
-      const order_items_query = `delete from order_items where order_id = ${order_id}`
-      db.query(order_items_query, (e,res)=>{
-        if(e){return res.json(e)}
-      })
-    })
+    if (error) {
+      return res.json(error);
+    }
+    const order_discounts_query = `delete from order_discounts where order_id = ${order_id}`;
+    db.query(order_discounts_query, (err, result) => {
+      if (err) {
+        return res.json(err);
+      }
+      const order_items_query = `delete from order_items where order_id = ${order_id}`;
+      db.query(order_items_query, (e, res) => {
+        if (e) {
+          return res.json(e);
+        }
+      });
+    });
     // else return res.json(data);
   });
 });
-
 
 app.listen(8081, () => {
   console.log("Server listening on port 8081");

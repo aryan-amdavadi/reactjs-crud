@@ -21,7 +21,7 @@ export default function CheckoutPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastTheme, setToastTheme] = useState("success");
   const [productData, setProductData] = useState([]);
-  const [activeAccordion, setActiveAccordion] = useState(null); 
+  const [activeAccordion, setActiveAccordion] = useState(null);
   const [cartData, setCartData] = useState([]);
   const [paymentDone, setPaymentDone] = useState(false);
   const [coupon, setCoupon] = useState("");
@@ -132,50 +132,9 @@ export default function CheckoutPage() {
   };
 
   const handleSubmit = (e) => {
-    setShowPayment(true);
     e.preventDefault();
-
-    if (!selected && showTimeFrame) {
-      setToastMessage("Select Timeframe");
-      setToastTheme("danger");
-      setShowToast(true);
-      return;
-    }
-    if (!userId) {
-      setToastMessage("Login To Continue");
-      setToastTheme("danger");
-      setShowToast(true);
-    }
-    if (getFinalTotal() !== 0) {
-      setActiveAccordion("payment");
-    }
-    const { notes, fullName, ...userData } = form;
-    const fullname_part = form.fullName.split(" ", 2);
-    const First_Name = fullname_part[0];
-    const Last_Name = fullname_part[1];
-    userData.first_name = First_Name;
-    userData.last_name = Last_Name;
-    const dataObject = {
-      user_id: userId,
-      user_details: JSON.stringify(userData),
-      time_frame: selected,
-      shipping_cost:
-        shippingThreshold > totalPrice ? Number(shippingFee.toFixed(2)) : 0.0,
-      orderData: cartData,
-      notes: form.notes,
-      discount_code: coupon,
-      discount_amount: totalPrice - discountedTotal,
-      amount_paid: getFinalTotal().toFixed(2),
-      product_price: totalPrice.toFixed(2),
-    };
-    axios
-      .post("http://localhost:8081/api/addorder", dataObject)
-      .then((res) => {
-        setToastMessage("Pay To Continue...");
-        setToastTheme("danger");
-        setShowToast(true);
-      })
-      .catch((err) => {});
+    setShowPayment(true);
+    setShowPayment(true)
   };
 
   useEffect(() => {
@@ -508,7 +467,7 @@ export default function CheckoutPage() {
                   placeholder="Additional Notes (Optional)"
                   className="input textarea"
                 />
-               
+
                 <div
                   style={{
                     height: "60px",
@@ -529,7 +488,10 @@ export default function CheckoutPage() {
                 </div>
               </form>
 
-               <div className="accordion-wrapper" style={{display:showPayment?"block":"none"}}>
+              <div
+                className="accordion-wrapper"
+                style={{ display: showPayment ? "block" : "none" }}
+              >
                 <div
                   className="accordion-header"
                   onClick={() => toggleAccordion("payment")}
@@ -562,14 +524,73 @@ export default function CheckoutPage() {
                             clientSecret={clientSecret}
                             width="660px"
                             onPaymentSuccess={(intent) => {
-                              setPaymentDone(true);
-                              setShowPayment(false);
-                              setToastMessage("Order Placed..");
-                              setToastTheme("success");
-                              setShowToast(true);
-                              setTimeout(() => {
-                                navigate("/menu");
-                              }, 3500);
+                              if (!selected && showTimeFrame) {
+                                setToastMessage("Select Timeframe");
+                                setToastTheme("danger");
+                                setShowToast(true);
+                                return;
+                              }
+                              if (!userId) {
+                                setToastMessage("Login To Continue");
+                                setToastTheme("danger");
+                                setShowToast(true);
+                                return;
+                              }
+                              if (getFinalTotal() !== 0) {
+                                setActiveAccordion("payment");
+                              }
+                              const { notes, fullName, ...userData } = form;
+                              const fullname_part = form.fullName.split(" ", 2);
+                              const First_Name = fullname_part[0];
+                              const Last_Name = fullname_part[1];
+                              userData.first_name = First_Name;
+                              userData.last_name = Last_Name;
+                              const dataObject = {
+                                user_id: userId,
+                                user_details: JSON.stringify(userData),
+                                time_frame: selected,
+                                shipping_cost:
+                                  shippingThreshold > totalPrice
+                                    ? Number(shippingFee.toFixed(2))
+                                    : 0.0,
+                                orderData: cartData,
+                                notes: form.notes,
+                                discount_code: coupon,
+                                discount_amount: totalPrice - discountedTotal,
+                                amount_paid: getFinalTotal().toFixed(2),
+                                product_price: totalPrice.toFixed(2),
+                              };
+                              axios
+                                .post(
+                                  "http://localhost:8081/api/addorder",
+                                  dataObject
+                                )
+                                .then((res) => {
+                                  console.log(res.data);
+                                  const paymentIntentId = intent?.id;
+                                  if (paymentIntentId) {
+                                    axios.post(
+                                      "http://localhost:8081/api/save-payment-intent",
+                                      {
+                                        order_id: res.data.order_id,
+                                        user_id: userId,
+                                        payment_intent_id: paymentIntentId,
+                                        amount_paid:getFinalTotal().toFixed(2),
+                                        refund_amount:null
+                                      }
+                                    );
+                                  }
+                                  setPaymentDone(true);
+                                  setShowPayment(false);
+                                  setToastMessage("Order Placed..");
+                                  setToastTheme("success");
+                                  setShowToast(true);
+
+                                  setTimeout(() => {
+                                    navigate("/menu");
+                                  }, 3500);
+                                })
+                                .catch((err) => {});
                             }}
                           />
                         </Elements>
@@ -580,7 +601,6 @@ export default function CheckoutPage() {
                   )}
                 </div>
               </div>
-              
             </div>
           </div>
 

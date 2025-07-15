@@ -128,7 +128,7 @@ function AppNavbar({ loadData, setLoadData,color,openCart}) {
             <div className={`profile-dropdown ${dropdownOpen ? "show" : ""}`}>
               <div className="profile-info">
                 <strong>
-                  {profiledata.First_Name + profiledata.Last_Name || "..."}
+                  {profiledata.First_Name  +" " + profiledata.Last_Name || "..."}
                 </strong>
                 <strong>{profiledata.Email || "..."}</strong>
                 <strong>{profiledata.Phone_No || "..."}</strong>
