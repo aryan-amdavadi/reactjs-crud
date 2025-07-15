@@ -346,7 +346,7 @@ input,
 select {
   background-color: var(--input-bg);
   border: 1px solid var(--border-color);
-  color: #1b3b2f;
+  color: var(--button-hover);
 }
 input::placeholder {
   color: #a0a8b3;

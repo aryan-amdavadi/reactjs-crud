@@ -23,15 +23,15 @@ export default function AddDiscount() {
   const [eligibility, setEligibility] = useState("everyone");
 
   const [query, setQuery] = useState("");
-  const [userQuery, setUserQuery] = useState("");
   const [searchProductData, setSearchProductData] = useState([]);
+  const [userQuery, setUserQuery] = useState("");
   const [searchUserData, setSearchUserData] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   const [usageLimitChecked, setUsageLimitChecked] = useState(true);
   const [onePerCustomerChecked, setOnePerCustomerChecked] = useState(false);
   const [newCustomersOnlyChecked, setNewCustomersOnlyChecked] = useState(false);
 
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
 
   const [errors, setErrors] = useState({});
@@ -44,7 +44,7 @@ export default function AddDiscount() {
           ids: productIds,
         }
       );
-      setSelectedProducts(res.data); // Assumes each item has { id, title }
+      setSelectedProducts(res.data);
     } catch (error) {
       console.error("Failed to load products by IDs:", error);
     }

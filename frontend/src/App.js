@@ -14,6 +14,7 @@ import OrderHistoryPage from "./components/Content/OrderHistory";
 import DiscountLayout from "./components/Admin/DiscountLayout"
 import DiscountAdd from "./components/Admin/DiscountAdd"
 import EditOrderPage from "./components/Content/EditOrder";
+import GiftLayout from "./components/Admin/GiftLayout";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/users" element={<NewsLayout />} />
           <Route path="/posts" element={<PostLayout />} />
           <Route path="/products" element={<ProductLayout />} />
+          <Route path="/gift-card" element={<GiftLayout />} />
           <Route path="/resetpassword" element={<ResetPassword />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/shipping" element={<ShippingLayout />} />

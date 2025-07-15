@@ -200,6 +200,7 @@ input:focus {
 }
 
 .toggle-label {
+  color:#f7c548;
   font-weight: 500;
 }
 
@@ -339,7 +340,6 @@ input:focus {
   left: 0;
   right: 0;
   background: rgba(25, 39, 33, 0.95);
-  border: 1px solid #2e4d42;
   border-radius: 14px;
   backdrop-filter: blur(12px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
@@ -491,6 +491,8 @@ input[type="checkbox"]:checked {
 }
 label {
   margin-bottom: 8px;
+  color: var(--text-primary);
+  margin-left: 10px;
 }
 .selected-product-list {
   display: flex;
@@ -518,6 +520,7 @@ label {
 
 /* Remove button inside chip */
 .remove-btn {
+  position: absolute;
   right: 8px;
   top: 50%;
   transform: translateY(-50%);

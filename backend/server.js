@@ -231,6 +231,14 @@ app.get("/discounts", (req, res) => {
   );
 });
 
+//Get Gift Card
+app.get("/giftcard", (req, res) => {
+  const sql = "select * from gift_card";
+  db.query(sql, (error, data) =>
+    error ? res.status(500).json(error) : res.json(data)
+  );
+});
+
 //Get Orders
 app.post("/api/orders", (req, res) => {
   const { user_id } = req.body;
@@ -816,6 +824,24 @@ app.post("/api/editcomment", (req, res) => {
   const comment = req.body.comment;
   const comment_id = req.body.comment_id;
   const editQuery = `update comments set comment='${comment}' where comment_id = ${comment_id}`;
+  db.query(editQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/api/addcard", (req, res) => {
+  const {code,value,user_id,enabled,expiry_date} = req.body
+  const editQuery = `INSERT INTO gift_card(code, value, user_id, expiry_date, enabled) VALUES('${code}',${value},'${user_id}','${expiry_date}',${enabled})`;
+  db.query(editQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.post("/api/editcard", (req, res) => {
+  const {code,value,user_id,enabled,expiry_date,id} = req.body
+  const editQuery = `UPDATE gift_card set code = '${code}', value=${value}, user_id='${user_id}', expiry_date='${expiry_date}', enabled=${enabled} WHERE id = ${id}`;
   db.query(editQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);

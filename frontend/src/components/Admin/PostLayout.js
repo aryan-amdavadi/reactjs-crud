@@ -37,10 +37,6 @@ function PostLayout() {
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  //
-  //
-  //
-  //
   const handleSubmit = (event) => {
     setTableOpen(false);
     event.preventDefault();

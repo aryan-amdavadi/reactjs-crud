@@ -100,6 +100,9 @@ function AppNavbar({ loadData, setLoadData,color,openCart}) {
           <Link className="btn btn-light mx-2" to="/discount">
             Discounts
           </Link>
+          <Link className="btn btn-light mx-2" to="/gift-card">
+            Gift Card
+          </Link>
         </div>
         <div className="nav-actions">
           <button
