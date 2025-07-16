@@ -35,6 +35,14 @@ function GiftLayout() {
       });
     setModalOpen(false);
     setTimeout(()=>{
+      setCardData({
+      code: "",
+      enabled: "",
+      expiry_date: "",
+      user_id: "",
+      value: "",
+    })
+    selectedUsers([])
       setTableOpen(true)
     },1)
   };
@@ -115,6 +123,21 @@ function GiftLayout() {
               encType="multipart/form-data"
               id="details"
             >
+            <Modal.Header>
+                      <div>Enter The Details Of Gift Card</div>
+                      <div>
+                        <button
+                          type="button"
+                          to="/"
+                          onClick={() => {
+                            setModalOpen(false);
+                          }}
+                          className="btn btn-light"
+                        >
+                          <i className="fa-solid fa-x"></i>
+                        </button>
+                      </div>
+                    </Modal.Header>
               <Modal.Body>
               <div className="mb-3">
                 <label htmlFor="Title" className="form-label">

@@ -111,8 +111,16 @@ function AppNavbar({ loadData, setLoadData,color,openCart}) {
               setShowCart(true);
             }}
           >
-            🛒 Cart
+            <i className="fa-solid fa-cart-shopping"></i> Cart
           {quantity > 0 && <span className="cart-badge themed">{quantity}</span>}
+          </button>
+          <button
+            className="nav-btn"
+            onClick={() => {
+              navigate("/giftCards")
+            }}
+          >
+            <i className="fa-solid fa-gifts"></i> Gift Cards
           </button>
           <Link
             className="nav-btn"

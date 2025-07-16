@@ -15,6 +15,7 @@ import DiscountLayout from "./components/Admin/DiscountLayout"
 import DiscountAdd from "./components/Admin/DiscountAdd"
 import EditOrderPage from "./components/Content/EditOrder";
 import GiftLayout from "./components/Admin/GiftLayout";
+import BuyGiftCardPage from "./components/Content/GiftCard";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/history" element={<OrderHistoryPage />}/>
           <Route path="/discount" element={<DiscountLayout />}/>
           <Route path="/adddiscount" element={<DiscountAdd />}/>
+          <Route path="/giftCards" element={<BuyGiftCardPage />}/>
           <Route path="/editorder" element={<EditOrderPage />}/>
         </Routes>
       </Router>

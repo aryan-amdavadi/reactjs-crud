@@ -135,9 +135,12 @@ function Comments(props) {
                 <div className="note" style={{backgroundColor:"#3f503c"}}>
                   <span>{comment.date}</span>
                   <p>
-                    <p style={{backgroundColor:isCommentAdmin?"#f0f9f4":"",borderLeft:isCommentAdmin?"4px solid #2e5939":""}}>
+                    <span style={{fontSize:isCommentAdmin?"larger":"",
+                      borderRadius:isCommentAdmin?"8px":"",
+                      color:isCommentAdmin?"#f7c548":""
+                    }}>
                       {isCommentAdmin ? "Admin " : ""}
-                    </p>
+                    </span>
                     <strong>{user ? user.First_Name : "Unknown "}</strong>
                     {" : "}
                     {isEditing ? (

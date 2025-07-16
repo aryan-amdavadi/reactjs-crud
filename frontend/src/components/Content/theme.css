@@ -3342,3 +3342,31 @@ h5{
   padding: 6px 10px;
   border-radius: 8px;
 }
+.gift-card-redeem {
+  margin-top: 1rem;
+  display: flex;
+  gap: 8px;
+}
+
+.gift-card-redeem input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #1f2c28;
+  color: #fff;
+  border: 1px solid #00c9a7;
+}
+
+.gift-card-redeem button {
+  padding: 10px 14px;
+  background-color: #00c9a7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.gift-card-redeem button:hover {
+  background-color: #007d72;
+}

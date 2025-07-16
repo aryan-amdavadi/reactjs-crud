@@ -23,10 +23,13 @@ export default function CheckoutPage() {
   const [productData, setProductData] = useState([]);
   const [activeAccordion, setActiveAccordion] = useState(null);
   const [cartData, setCartData] = useState([]);
+  const [giftCardData, setGiftCardData] = useState([])
   const [paymentDone, setPaymentDone] = useState(false);
   const [coupon, setCoupon] = useState("");
+  const [giftValue, setGiftValue] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
+  const [giftCode, setGiftCode] = useState("");
   const [discountedTotal, setDiscountedTotal] = useState(0);
   const [form, setForm] = useState({
     fullName: "",
@@ -40,9 +43,8 @@ export default function CheckoutPage() {
   const stripePromise = loadStripe(
     process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
   );
-
+  
   const [showPayment, setShowPayment] = useState(false);
-
   const handleSelect = (option) => {
     setSelected(option.name);
     setShippingFee(option.shipping_cost);
@@ -65,6 +67,10 @@ export default function CheckoutPage() {
       .then((res) => {
         setProductData(res.data);
       })
+      .catch((err) => console.log(err));
+    axios
+      .get("http://localhost:8081/giftcard")
+      .then((res) => setGiftCardData(res.data))
       .catch((err) => console.log(err));
     axios
       .post("http://localhost:8081/carts", userObject)
@@ -107,6 +113,22 @@ export default function CheckoutPage() {
     discountedTotal,
     shippingFee,
   ]);
+  const handleValidateGiftCard = async () => {
+    try {
+      const res = await axios.post("http://localhost:8081/api/addcredits", {
+        code: giftCode,
+        user_id: localStorage.getItem("user_id"),
+      });
+      setGiftValue(res.data.value);
+      setToastMessage("Gift Card Applied!");
+      setToastTheme("success");
+      setShowToast(true);
+    } catch (err) {
+      setToastMessage("Error");
+      setToastTheme("danger");
+      setShowToast(true);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -134,7 +156,6 @@ export default function CheckoutPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setShowPayment(true);
-    setShowPayment(true)
   };
 
   useEffect(() => {
@@ -265,7 +286,7 @@ export default function CheckoutPage() {
                   }`}
                 >
                   <div className="mb-3 ">
-                    <label htmlFor="exampleFormControlInput1" className="title">
+                    <label  className="title">
                       Email Address
                     </label>
                     <br />
@@ -283,7 +304,7 @@ export default function CheckoutPage() {
                   <div style={{ display: userId ? "none" : "block" }}>
                     <div style={{ margin: "2px", height: "68px" }}>
                       <label
-                        htmlFor="exampleFormControlInput1"
+                        
                         className="title"
                       >
                         Password
@@ -331,8 +352,8 @@ export default function CheckoutPage() {
                 className="checkout-form"
                 id="checkoutDetails"
               >
-                <h2 className="section-title">Delivery Details</h2>
-                <div className="accordion-wrapper">
+                <h2 className="section-title" style={{display:cartData[0]?.product_id?"block":"none"}}>Delivery Details</h2>
+                <div className="accordion-wrapper" style={{display:cartData[0]?.product_id?"block":"none"}}>
                   <div
                     className="accordion-header"
                     onClick={() => toggleAccordion("shipping")}
@@ -457,24 +478,31 @@ export default function CheckoutPage() {
                     )}
                   </div>
                 )}
-                <label htmlFor="exampleFormControlInput1" className="title">
-                  Delivery Notes
-                </label>
-                <textarea
-                  name="notes"
-                  value={form.notes}
-                  onChange={handleChange}
-                  placeholder="Additional Notes (Optional)"
-                  className="input textarea"
-                />
-
+                <div style={{display:cartData[0]?.product_id?"block":"none"}}>
+                  <label className="title">
+                    Delivery Notes
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={form.notes}
+                    onChange={handleChange}
+                    placeholder="Additional Notes (Optional)"
+                    className="input textarea"
+                  />
+                </div>
                 <div
                   style={{
                     height: "60px",
                     display: showPayment ? "none" : "flex",
                   }}
                 >
-                  <button type="submit" className="submit-btn">
+                  <button type="submit" className="submit-btn" onClick={()=>{
+                    if(cartData[0]?.product_id){
+                      return
+                    }else{
+                      setShowPayment(true)
+                    }
+                  }}>
                     {paymentDone ? "Place Order" : "Procced To Pay"}
                   </button>
                   <button
@@ -524,6 +552,12 @@ export default function CheckoutPage() {
                             clientSecret={clientSecret}
                             width="660px"
                             onPaymentSuccess={(intent) => {
+                              if(!cartData[0]?.product_id){
+                                setToastMessage("Payment Completed");
+                                setToastTheme("success");
+                                setShowToast(true);
+                                return;
+                              }
                               if (!selected && showTimeFrame) {
                                 setToastMessage("Select Timeframe");
                                 setToastTheme("danger");
@@ -575,8 +609,8 @@ export default function CheckoutPage() {
                                         order_id: res.data.order_id,
                                         user_id: userId,
                                         payment_intent_id: paymentIntentId,
-                                        amount_paid:getFinalTotal().toFixed(2),
-                                        refund_amount:null
+                                        amount_paid: getFinalTotal().toFixed(2),
+                                        refund_amount: null,
                                       }
                                     );
                                   }
@@ -612,7 +646,7 @@ export default function CheckoutPage() {
                 <li key={i} className="item">
                   <span>
                     {productData.find((data) => data.id === item.product_id)
-                      ?.title || "Unknown Product"}{" "}
+                      ?.title || giftCardData.find((data) => data.id === item.giftcard_id)?.code}{" "}
                     × {item.quantity}
                   </span>
                   <span>₹{(item.price * item.quantity).toFixed(2)}</span>
@@ -639,13 +673,36 @@ export default function CheckoutPage() {
                 />
                 <button
                   className="submit-btn"
-                  style={{ height: "50px" }}
+                  style={{ height: "50px" , width:"10rem"}}
                   onClick={applyCoupon}
                 >
-                  Apply
+                  Apply Discount
                 </button>
               </div>
             )}
+            {/* <div
+              className="coupon-row"
+              style={{ display: "flex", justifyContent: "space-between" }}
+            >
+              <input
+                type="text"
+                value={giftCode}
+                onChange={(e) => setGiftCode(e.target.value)}
+                style={{
+                  width: "18rem",
+                  height: "3rem",
+                }}
+                className="input"
+                placeholder="Gift Card Code"
+              />
+              <button
+                className="submit-btn"
+                style={{ height: "50px", width:"10rem" }}
+                onClick={handleValidateGiftCard}
+              >
+                Apply Gift Card
+              </button>
+            </div> */}
             <br />
             <div className="summary-row">
               <div className="price-row">
@@ -681,6 +738,22 @@ export default function CheckoutPage() {
                   >
                     ✖
                   </button>
+                </div>
+              </div>
+              <div
+                className="summary-row price-row"
+                style={{ justifyContent: "space-between" ,
+                  display:giftValue>0?"flex":"none"
+                }}
+              >
+                <span className="price-label">
+                  Gift Card {giftCode?.code?.toUpperCase() || ""}
+                </span>
+
+                <div className="d-flex">
+                  <span className="discount price-label">
+                    – ₹{giftValue.toFixed(2) || "0.00"}
+                  </span>
                 </div>
               </div>
               <div

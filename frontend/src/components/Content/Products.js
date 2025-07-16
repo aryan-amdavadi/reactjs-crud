@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import axios from "axios";
+import Toast from "./Toast";
 
 function Products() {
   const [data, setData] = useState([]);
+  const [toastMessage, setToastMessage] = useState("");
+  const [showToast, setShowToast] = useState(false);
+  const [toastTheme, setToastTheme] = useState("success");
   const [cartData, setCartData] = useState([]);
   const [loadData, setLoadData] = useState(0);
-  const [openCart,setOpenCart] = useState(false)
+  const [openCart, setOpenCart] = useState(false);
   useEffect(() => {
     axios
       .get("http://localhost:8081/products")
@@ -17,13 +21,12 @@ function Products() {
 
     if (userId) {
       const userObject = {
-        user_id:userId
-      }
+        user_id: userId,
+      };
       axios
         .post("http://localhost:8081/carts", userObject)
         .then((res) => {
-
-          setCartData(res.data)
+          setCartData(res.data);
         })
         .catch((err) => console.log(err));
     } else {
@@ -33,7 +36,7 @@ function Products() {
   }, [loadData]);
 
   const handleAddCart = (data) => {
-    setOpenCart(false)
+    setOpenCart(false);
     if (localStorage.getItem("user_id") === null) {
       let cart = JSON.parse(localStorage.getItem("cart")) || {};
 
@@ -49,9 +52,9 @@ function Products() {
       }
 
       localStorage.setItem("cart", JSON.stringify(cart));
-      setCartData(Object.values(cart)); 
+      setCartData(Object.values(cart));
       setLoadData((prev) => prev + 1);
-      setOpenCart(true)
+      setOpenCart(true);
       return; // Stop here, don't call the backend
     }
     const dataObject = { ...data };
@@ -61,21 +64,26 @@ function Products() {
     axios
       .post("http://localhost:8081/api/addcart", dataObject)
       .then((response) => {
-        setLoadData((prev) => prev + 1);
-        setOpenCart(true)
+        if (response.data.items === "card") {
+          setToastMessage("Clear The Gift Card Or Purchase It...");
+          setToastTheme("danger");
+          setShowToast(true);
+        }else{
+          setLoadData((prev) => prev + 1);
+          setOpenCart(true);
+        }
       })
       .catch((error) => {
         console.log(error);
       });
     if (userId) {
       const userObject = {
-        user_id:userId
-      }
+        user_id: userId,
+      };
       axios
         .post("http://localhost:8081/carts", userObject)
         .then((res) => {
-          setCartData(res.data)
-          setOpenCart(true)
+          setCartData(res.data);
         })
         .catch((err) => console.log(err));
     }
@@ -114,20 +122,30 @@ function Products() {
       });
     if (userId) {
       const userObject = {
-        user_id:userId
-      }
+        user_id: userId,
+      };
       axios
         .post("http://localhost:8081/carts", userObject)
         .then((res) => {
-
-          setCartData(res.data)
+          setCartData(res.data);
         })
         .catch((err) => console.log(err));
     }
   };
   return (
     <>
-      <Navbar loadData={loadData} setLoadData={setLoadData} openCart={openCart} />
+      <Navbar
+        loadData={loadData}
+        setLoadData={setLoadData}
+        openCart={openCart}
+      />
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          theme={toastTheme}
+          onClose={() => setShowToast(false)}
+        />
+      )}
       <div className="container">
         {data.map((data, i) => (
           <div className="card" key={i}>
@@ -169,18 +187,16 @@ function Products() {
             </button>
             <div
               style={{
-                display:
-                  cartData.find(
-                    (product) =>
-                      product.product_id === data.id &&
-                      cartData.find(
-                        (product) =>
-                          product.quantity !== 0 &&
-                          product.product_id === data.id
-                      )
-                  )
-                    ? "flex"
-                    : "none",
+                display: cartData.find(
+                  (product) =>
+                    product.product_id === data.id &&
+                    cartData.find(
+                      (product) =>
+                        product.quantity !== 0 && product.product_id === data.id
+                    )
+                )
+                  ? "flex"
+                  : "none",
                 backgroundColor: "#a3d9b1",
                 borderRadius: "10px",
                 justifyContent: "space-between",

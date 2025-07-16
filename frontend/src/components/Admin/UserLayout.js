@@ -236,50 +236,6 @@ function NewsLayout() {
                         </select>
                         <br />
                       </div>
-                      <div className="my-2">
-                        <div>
-                          <label
-                            htmlFor="exampleFormControlInput1"
-                            className="form-label my-1"
-                          >
-                            Status
-                          </label>
-                        </div>
-                        <div className="d-flex">
-                          <div className="form-check mx-2">
-                            <input
-                              className="form-check-input"
-                              type="radio"
-                              value={"Active"}
-                              name="status"
-                              id="Status"
-                              required
-                            />
-                            <label
-                              className="form-check-label"
-                              htmlFor="radioDefault1"
-                            >
-                              Active
-                            </label>
-                          </div>
-                          <div className="form-check mx-2">
-                            <input
-                              className="form-check-input"
-                              type="radio"
-                              value={"UnActive"}
-                              name="status"
-                              id="Status"
-                              required
-                            />
-                            <label
-                              className="form-check-label"
-                              htmlFor="radioDefault1"
-                            >
-                              UnActive
-                            </label>
-                          </div>
-                        </div>
-                      </div>
                       <div className="mb-3 my-3" id="imageDiv">
                         <label htmlFor="formFile" className="form-label">
                           Image

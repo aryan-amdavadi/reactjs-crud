@@ -251,6 +251,14 @@ app.post("/api/orders", (req, res) => {
   });
 });
 
+//Get Gift Card
+app.get("/giftcard", (req, res) => {
+  const sql = "select * from gift_card";
+  db.query(sql, (error, data) =>
+    error ? res.status(500).json(error) : res.json(data)
+  );
+});
+
 app.post("/discountdata", (req, res) => {
   const { user_id } = req.body;
   const sql = "SELECT * FROM order_discounts WHERE user_id = ?";
@@ -494,10 +502,85 @@ app.post("/api/addcart", (req, res) => {
   const product_id = req.body.id || req.body.product_id;
   const quantity = req.body.quantity;
   const price = req.body.price;
-  const addQuery = `insert into carts (user_id, product_id,price, quantity) values(${user_id},${product_id},${price},${quantity})`;
-  db.query(addQuery, (error, data) => {
-    if (error) return res.json(error);
-    else return res.json(data);
+  const checkQuery =
+    "SELECT * FROM carts WHERE user_id = ? AND giftcard_id IS NOT null";
+  db.query(checkQuery, [user_id], (error, result) => {
+    if (error) return res.status(500).json({ error: "DB error" });
+    if (result.length === 0) {
+      const addQuery = `insert into carts (user_id, product_id,price, quantity) values(${user_id},${product_id},${price},${quantity})`;
+      db.query(addQuery, (error, data) => {
+        if (error) return res.json(error);
+        else return res.json(data);
+      });
+    }else {
+      return res.status(200).json({
+        message: "Clear the cart of Gift Card first.",
+        items: "card",
+      });
+    }
+  });
+});
+
+app.post("/api/addcredits", (req, res) => {
+  const { code, user_id } = req.body;
+
+  const searchQuery = `
+    SELECT * FROM gift_card
+    WHERE code = ? AND (expiry_date IS NULL OR expiry_date > NOW()) AND enabled = 1
+  `;
+
+  db.query(searchQuery, [code], (error, data) => {
+    if (error) return res.status(500).json({ error: "DB error" });
+
+    const giftCard = data[0];
+    if (!giftCard)
+      return res.status(404).json({ error: "Invalid or expired code" });
+
+    const usersList = JSON.parse(giftCard.user_id || "[]");
+    if (usersList.length > 0 && !usersList.includes(Number(user_id))) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to use this card." });
+    }
+
+    const updateCreditsQuery = `
+      UPDATE emp SET credits = credits + ? WHERE Emp_Id = ?
+    `;
+
+    db.query(updateCreditsQuery, [giftCard.value, user_id], (err) => {
+      if (err) return res.status(500).json({ error: "Credits not updated." });
+      return res.json({ success: true, value: giftCard.value });
+    });
+  });
+});
+
+app.post("/api/giftcardcart", (req, res) => {
+  const { giftCard, user_id } = req.body;
+
+  const checkQuery =
+    "SELECT * FROM carts WHERE user_id = ? AND product_id IS NOT NULL";
+  db.query(checkQuery, [user_id], (error, result) => {
+    if (error) return res.status(500).json({ error: "DB error" });
+
+    if (result.length === 0) {
+      const addGiftCardQuery = `
+        INSERT INTO carts (user_id, giftcard_id, price, quantity)
+        VALUES (?, ?, ?, ?)
+      `;
+      db.query(
+        addGiftCardQuery,
+        [user_id, giftCard.id, giftCard.value, 1],
+        (insertErr) => {
+          if (insertErr) return res.status(500).json({ error: insertErr });
+          return res.status(200).json({ message: "Gift card added to cart." });
+        }
+      );
+    } else {
+      return res.status(200).json({
+        message: "Clear the cart of products first.",
+        items: "products",
+      });
+    }
   });
 });
 
@@ -627,8 +710,8 @@ app.post("/api/addorder", (req, res) => {
 
 app.post("/api/validatecoupon", (req, res) => {
   const { code, user_id, total, cartData } = req.body;
-  if(code===undefined){
-    return res.send(null)
+  if (code === undefined) {
+    return res.send(null);
   }
   db.query(
     `SELECT * FROM discounts WHERE code = '${code}' AND enabled = 1`,
@@ -831,7 +914,7 @@ app.post("/api/editcomment", (req, res) => {
 });
 
 app.post("/api/addcard", (req, res) => {
-  const {code,value,user_id,enabled,expiry_date} = req.body
+  const { code, value, user_id, enabled, expiry_date } = req.body;
   const editQuery = `INSERT INTO gift_card(code, value, user_id, expiry_date, enabled) VALUES('${code}',${value},'${user_id}','${expiry_date}',${enabled})`;
   db.query(editQuery, (error, data) => {
     if (error) return res.json(error);
@@ -840,7 +923,7 @@ app.post("/api/addcard", (req, res) => {
 });
 
 app.post("/api/editcard", (req, res) => {
-  const {code,value,user_id,enabled,expiry_date,id} = req.body
+  const { code, value, user_id, enabled, expiry_date, id } = req.body;
   const editQuery = `UPDATE gift_card set code = '${code}', value=${value}, user_id='${user_id}', expiry_date='${expiry_date}', enabled=${enabled} WHERE id = ${id}`;
   db.query(editQuery, (error, data) => {
     if (error) return res.json(error);
@@ -969,12 +1052,12 @@ app.post("/api/updateorder", (req, res) => {
     product_price,
     amount_paid,
     discount_code,
-    shipping_cost,//
-    discountedTotal,//
-    amountPaid,//
+    shipping_cost, //
+    discountedTotal, //
+    amountPaid, //
     discount_amount,
     payment_intent_id,
-    type
+    type,
   } = req.body;
 
   if (!order_id || !items || Object.keys(items).length === 0) {
@@ -1042,38 +1125,49 @@ app.post("/api/updateorder", (req, res) => {
                   });
                 }
                 // Step 5: Update Payment Intent ID
-                if(type==="Payment"){
+                if (type === "Payment") {
                   const IntentPaymentQuery = `UPDATE order_payments SET payment_id = ?, amount= ? WHERE order_id = ?`;
-                db.query(
-                  IntentPaymentQuery,
-                  [payment_intent_id,(discountedTotal+shipping_cost-amountPaid), order_id],
-                  (eror) => {
-                    if (eror) {
-                      return res.status(500).json({
-                        error: "Failed to update Payment Intent Id.",
-                        detail: eror,
+                  db.query(
+                    IntentPaymentQuery,
+                    [
+                      payment_intent_id,
+                      discountedTotal + shipping_cost - amountPaid,
+                      order_id,
+                    ],
+                    (eror) => {
+                      if (eror) {
+                        return res.status(500).json({
+                          error: "Failed to update Payment Intent Id.",
+                          detail: eror,
+                        });
+                      }
+                      return res.json({
+                        success: true,
+                        message: "Order updated",
                       });
                     }
-                    return res.json({ success: true, message: "Order updated" });
-                  }
-                );
-              }else if(type==="Refund"){
-                const IntentRefundQuery = `UPDATE order_payments SET amount = null, refunded_amount=? WHERE order_id = ?`;
-                db.query(
-                  IntentRefundQuery,
-                  [(discountedTotal+shipping_cost-amountPaid), order_id],
-                  (eror) => {
-                    if (eror) {
-                      return res.status(500).json({
-                        error: "Failed to update Payment Intent Id.",
-                        detail: eror,
+                  );
+                } else if (type === "Refund") {
+                  const IntentRefundQuery = `UPDATE order_payments SET amount = null, refunded_amount=? WHERE order_id = ?`;
+                  db.query(
+                    IntentRefundQuery,
+                    [discountedTotal + shipping_cost - amountPaid, order_id],
+                    (eror) => {
+                      if (eror) {
+                        return res.status(500).json({
+                          error: "Failed to update Payment Intent Id.",
+                          detail: eror,
+                        });
+                      }
+                      return res.json({
+                        success: true,
+                        message: "Order updated",
                       });
                     }
-                    return res.json({ success: true, message: "Order updated" });
-                  }
-                );
+                  );
+                }
               }
-            });
+            );
           } else {
             return res.json({ success: true, message: "Order updated" });
           }
@@ -1171,9 +1265,27 @@ app.delete("/api/deleteshipping", (req, res) => {
   });
 });
 
+app.delete("/api/deletegiftcart", (req, res) => {
+  const id = req.body.id;
+  const deleteQuery = `delete from carts where id = ${id}`;
+  db.query(deleteQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
 app.delete("/api/deletediscount", (req, res) => {
   const id = req.body.discount_id;
   const deleteQuery = `delete from discounts where id = ${id}`;
+  db.query(deleteQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
+app.delete("/api/deletecard", (req, res) => {
+  const id = req.body.card_id;
+  const deleteQuery = `delete from gift_card where id = ${id}`;
   db.query(deleteQuery, (error, data) => {
     if (error) return res.json(error);
     else return res.json(data);

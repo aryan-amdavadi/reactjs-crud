@@ -7,6 +7,7 @@ function CartPanel({ open, onClose, onCartChange }) {
   const userId = localStorage.getItem("user_id");
   const [cartData, setCartData] = useState([]);
   const [productData, setProductData] = useState([]);
+  const [giftCardData, setGiftCardData] = useState([]);
   const panelRef = useRef();
   useEffect(() => {
     if (userId) {
@@ -23,13 +24,32 @@ function CartPanel({ open, onClose, onCartChange }) {
       const localCart = JSON.parse(localStorage.getItem("cart")) || {};
       setCartData(Object.values(localCart));
     }
-
     axios
       .get("http://localhost:8081/products")
       .then((res) => setProductData(res.data))
       .catch((err) => console.log(err));
-  }, [open, userId]);
 
+    axios
+      .get("http://localhost:8081/giftcard")
+      .then((res) => setGiftCardData(res.data))
+      .catch((err) => console.log(err));
+  }, [open, userId]);
+  const handleRemoveCard = (item) => {
+    axios
+      .delete("http://localhost:8081/api/deletegiftcart", {
+        data: { id: Number(item.id) },
+      })
+      .then(() => {
+        if (onCartChange) onCartChange();
+        axios
+          .post("http://localhost:8081/carts", { user_id: userId })
+          .then((res) => {
+            setCartData(res.data);
+          })
+          .catch((err) => console.log(err));
+      })
+      .catch((err) => console.log(err));
+  };
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
@@ -82,7 +102,7 @@ function CartPanel({ open, onClose, onCartChange }) {
         .catch((err) => console.log(err));
     }, 1);
   };
-  const totalPrice = cartData.reduce((total, item) => {
+  const totalPrice = cartData?.reduce((total, item) => {
     return total + item.price * item.quantity;
   }, 0);
   const handleClearCart = () => {
@@ -105,14 +125,8 @@ function CartPanel({ open, onClose, onCartChange }) {
     }
   };
 
-
   return (
     <>
-      {/* {checkOutOpen && <CheckoutPage
-    cartItems={cartData}
-    total={totalPrice}
-    onBack={() => setCheckOutOpen(false)}
-  />} */}
       {open && <div className="cart-overlay" />}
       <div
         className={`cart-panel ${open ? "open" : ""}`}
@@ -130,16 +144,27 @@ function CartPanel({ open, onClose, onCartChange }) {
         </div>
 
         <div className="cart-body">
-          {cartData.map((item,i) => (
+          {cartData.map((item, i) => (
             <div className="cart-item" key={i}>
               <div className="item-info">
                 <h4>
                   {productData.find((data) => data.id === item.product_id)
-                    ?.title || "Unknown Product"}
+                    ?.title ||
+                    giftCardData.find((data) => data.id === item.giftcard_id)
+                      ?.code}
                 </h4>
                 <p>₹{item.price}</p>
               </div>
-              <div className="quantity-controls">
+              <div
+                className="quantity-controls"
+                style={{
+                  display: giftCardData.find(
+                    (data) => data.id === item.giftcard_id
+                  )?.id
+                    ? "none"
+                    : "flex",
+                }}
+              >
                 <button onClick={() => handleQuantity(item.product_id, -1)}>
                   -
                 </button>
@@ -147,6 +172,21 @@ function CartPanel({ open, onClose, onCartChange }) {
                 <button onClick={() => handleQuantity(item.product_id, 1)}>
                   +
                 </button>
+              </div>
+              <div
+                className="remove-btn"
+                style={{
+                  display: giftCardData.find(
+                    (data) => data.id === item.giftcard_id
+                  )?.id
+                    ? "flex"
+                    : "none",
+                }}
+                onClick={() => {
+                  handleRemoveCard(item);
+                }}
+              >
+                X
               </div>
             </div>
           ))}
@@ -156,7 +196,7 @@ function CartPanel({ open, onClose, onCartChange }) {
             className="cart-total"
             style={{ flexDirection: "column-reverse" }}
           >
-              <strong>₹{totalPrice.toFixed(2)}</strong>
+            <strong>₹{totalPrice.toFixed(2)}</strong>
           </div>
           <button
             className="checkout-btn"

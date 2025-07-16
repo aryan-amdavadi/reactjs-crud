@@ -3,7 +3,7 @@ import Modal from "react-bootstrap/Modal";
 import axios from "axios";
 
 function GiftContent(props) {
-  const user_id = localStorage.getItem("user_id");
+  // const user_id = localStorage.getItem("user_id");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false);
   const [id, setId] = useState();
@@ -72,7 +72,7 @@ function GiftContent(props) {
   };
   const handleDeleteContent = () => {
     const DataObject = {
-      id: cardData.id,
+      card_id: id,
     };
     axios
       .delete("http://localhost:8081/api/deletecard", {
@@ -85,14 +85,16 @@ function GiftContent(props) {
         console.log(error);
       });
     setModalDeleteOpen(false);
-    axios
-      .get("http://localhost:8081/giftcard")
-      .then((res) => {
-        setData(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    setTimeout(()=>{
+      axios
+        .get("http://localhost:8081/giftcard")
+        .then((res) => {
+          setData(res.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+  },12)
     setModalDeleteOpen(false);
   };
 

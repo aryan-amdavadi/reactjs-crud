@@ -1,0 +1,169 @@
+/* BuyGiftCardPage.css */
+
+
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #0f2027;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+.gift-card-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+  height: 91vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gift-title {
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 3.5rem;
+  text-align: center;
+}
+
+.gift-card-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.gift-image {
+  max-width: 480px;
+  width: 100%;
+  border-radius: 18px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  transition: transform 0.4s ease;
+}
+
+.gift-options {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 3rem;
+  border-radius: 22px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  animation: fadeSlideIn 0.7s ease forwards;
+}
+
+.gift-label {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #ffffff;
+}
+
+.dropdown-box {
+  position: relative;
+  width: 100%;
+  user-select: none;
+}
+
+.dropdown-selected {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid #00c9a7;
+  border-radius: 16px;
+  padding: 18px 22px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.3s ease;
+}
+
+.dropdown-selected:hover {
+  border-color: #fff;
+}
+
+.dropdown-arrow {
+  font-size: 1.2rem;
+  margin-left: 10px;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  right: 0;
+  background-color: rgba(30, 30, 30, 0.95);
+  border: 2px solid #00c9a7;
+  border-radius: 16px;
+  z-index: 10;
+  animation: fadeIn 0.2s ease;
+}
+
+.dropdown-item {
+  padding: 18px 22px;
+  font-size: 1.1rem;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #00c9a7;
+  color: #000;
+}
+
+.gift-buy-button {
+  background-color: #00c9a7;
+  color: #000;
+  padding: 18px;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  letter-spacing: 1px;
+}
+
+.gift-buy-button:hover {
+  background-color: #ffffff;
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+.dropdown-item.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}

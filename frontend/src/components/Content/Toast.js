@@ -4,7 +4,7 @@ const Toast = ({ message, onClose, theme }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 3500); // Auto close
+    }, 2500); // Auto close
     return () => clearTimeout(timer);
   }, [onClose]);
   const toastClass = theme === "danger" ? "toast-danger" : "toast-success";

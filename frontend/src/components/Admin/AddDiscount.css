@@ -491,7 +491,6 @@ input[type="checkbox"]:checked {
 }
 label {
   margin-bottom: 8px;
-  color: var(--text-primary);
   margin-left: 10px;
 }
 .selected-product-list {
@@ -520,9 +519,9 @@ label {
 
 /* Remove button inside chip */
 .remove-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
   transform: translateY(-50%);
   background: #fff;
   color: #ff4d4d;
