@@ -259,6 +259,13 @@ app.get("/giftcard", (req, res) => {
   );
 });
 
+app.get("/logs", (req, res) => {
+  const sql = "select * from user_credit_logs";
+  db.query(sql, (error, data) =>
+    error ? res.status(500).json(error) : res.json(data)
+  );
+});
+
 app.post("/discountdata", (req, res) => {
   const { user_id } = req.body;
   const sql = "SELECT * FROM order_discounts WHERE user_id = ?";

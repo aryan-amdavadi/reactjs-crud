@@ -1,0 +1,111 @@
+.drawer-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  color: #e0f7fa;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.drawer {
+  width: 240px;
+  padding: 40px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 6px 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.drawer h3 {
+  font-size: 22px;
+  margin-bottom: 40px;
+  color: #81e6d9;
+}
+
+.drawer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.drawer-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  background: transparent;
+  transition: 0.3s ease;
+  font-weight: 500;
+}
+
+.drawer-item:hover,
+.drawer-item.active {
+  background: rgba(129, 230, 217, 0.15);
+  color: #ffffff;
+  transform: translateX(4px);
+}
+
+.profile-content {
+  flex: 1;
+  padding: 60px 40px;
+}
+.drawer-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  color: #e0f7fa;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+/* Sidebar */
+.drawer {
+  width: 250px;
+  padding: 40px 20px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 6px 0 20px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+/* Main content area */
+.profile-container {
+  flex: 1; /* fills the rest of the width */
+  padding: 60px 50px;
+  overflow-y: auto;
+  width: calc(100% - 250px); /* subtract drawer width */
+}
+
+/* For gift card form layout */
+.gift-card-redeem {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 40px;
+  border-radius: 16px;
+  color: #fff;
+  max-width: 600px;
+  margin: 0 auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.gift-card-redeem input {
+  width: 100%;
+  padding: 14px 16px;
+  margin: 20px 0;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+}
+
+.gift-card-redeem button {
+  padding: 12px 24px;
+  background: #81e6d9;
+  color: #0f2027;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.gift-card-redeem button:hover {
+  background: #63d6c4;
+}
