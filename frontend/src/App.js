@@ -16,6 +16,7 @@ import DiscountAdd from "./components/Admin/DiscountAdd"
 import EditOrderPage from "./components/Content/EditOrder";
 import GiftLayout from "./components/Admin/GiftLayout";
 import BuyGiftCardPage from "./components/Content/GiftCard";
+import ThankYouPage from "./components/Content/ThankYouPage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/thank-you" element={<ThankYouPage />} />
           <Route path="/login-signup" element={<AuthForm />} />
           <Route path="/menu" element={<Products />} />
           <Route path="/users" element={<NewsLayout />} />

@@ -465,6 +465,17 @@ app.post("/api/addcomment", (req, res) => {
   });
 });
 
+app.post("/addgiftcard", (req, res) => {
+  const code = req.body.code;
+  const value = req.body.amount;
+  const user_id = req.body.user_id;
+  const addQuery = `INSERT INTO gift_card(code, value, user_id, expiry_date, enabled) VALUES('${code}',${value},'${user_id}',DATE_ADD(NOW(), INTERVAL 3 YEAR),1)`;
+  db.query(addQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+});
+
 app.post("/api/addproduct", upload.single("image"), (req, res) => {
   //req.file => Image Details
   //req.body => Body Details
@@ -708,6 +719,84 @@ app.post("/api/addorder", (req, res) => {
   );
 });
 
+app.post("/api/addcardorder", (req, res) => {
+  const {
+    user_id,
+    orderData,
+    amount_paid,
+    card_price,
+  } = req.body;
+
+  const addOrderQuery = `
+    INSERT INTO orders (user_id, product_price, amount_paid)
+    VALUES (?, ?, ?)
+  `;
+
+  db.query(
+    addOrderQuery,
+    [
+      user_id,
+      card_price,
+      amount_paid,
+    ],
+    (error, result) => {
+      if (error) return res.status(500).json({ error });
+
+      const insertedOrderId = result.insertId;
+
+      let completedInserts = 0;
+      let hasError = false;
+
+      if (orderData.length === 0) {
+        return res.json({
+          message: "Order inserted (no items)",
+          order_id: insertedOrderId,
+        });
+      }
+
+      for (let i = 0; i < orderData.length; i++) {
+        const item = orderData[i];
+        const orderItemsQuery = `
+          INSERT INTO order_items (order_id, card_id, price, quantity)
+          VALUES (?, ?, ?, ?)
+        `;
+        db.query(
+          orderItemsQuery,
+          [insertedOrderId, item.giftcard_id, item.price, item.quantity],
+          (err) => {
+            if (hasError) return;
+            if (err) {
+              hasError = true;
+              return res.status(500).json({
+                error: "Failed to insert order items",
+                detail: err,
+              });
+            }
+            completedInserts++;
+            if (completedInserts === orderData.length) {
+              const clearCartQuery = `DELETE FROM carts WHERE user_id = ?`;
+              db.query(clearCartQuery, [user_id], (clearErr) => {
+                if (clearErr) {
+                  return res.status(500).json({
+                    success: false,
+                    error: "Failed to clear cart",
+                    detail: clearErr,
+                  });
+                }
+                return res.json({
+                  message: "Order and items inserted successfully",
+                  order_id: insertedOrderId,
+                  total_items: completedInserts,
+                });
+              });
+            }
+          }
+        );
+      }
+    }
+  );
+});
+
 app.post("/api/validatecoupon", (req, res) => {
   const { code, user_id, total, cartData } = req.body;
   if (code === undefined) {
@@ -866,15 +955,16 @@ app.post("/api/editemployee", upload.single("image"), (req, res) => {
   const PhoneNo = Number(req.body.phone_number);
   const Gender = req.body.gender;
   const Hobbies = req.body.hobbies;
+  const password = req.body.password;
   try {
     const Image = req.file.filename;
-    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}', Image='${Image}' where Emp_Id = ${EmpId}`;
+    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}', Image='${Image}', password='${password}' where Emp_Id = ${EmpId}`;
     db.query(editQuery, (error, data) => {
       if (error) return res.json(error);
       else return res.json(data);
     });
   } catch (error) {
-    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}' where Emp_Id = ${EmpId}`;
+    const editQuery = `update emp set First_Name='${FirstName}', Last_Name='${LastName}', Email='${Email}', Phone_No='${PhoneNo}', Gender='${Gender}', Hobbies='${Hobbies}', password='${password}' where Emp_Id = ${EmpId}`;
     db.query(editQuery, (error, data) => {
       if (error) return res.json(error);
       else return res.json(data);
@@ -1177,7 +1267,7 @@ app.post("/api/updateorder", (req, res) => {
   });
 });
 
-app.post("/api/quantity", (req, res) => {
+app.post("/api/productquantity", (req, res) => {
   const product_id = req.body.product_id;
   const quantity = req.body.quantity;
   const user_id = Number(req.body.user_id);
@@ -1188,6 +1278,19 @@ app.post("/api/quantity", (req, res) => {
   });
   db.query("delete from carts where quantity=0");
 });
+
+app.post("/api/cardquantity", (req, res) => {
+  const card_id = req.body.card_id;
+  const quantity = req.body.quantity;
+  const user_id = Number(req.body.user_id);
+  const editQuery = `update carts set quantity=quantity+${quantity} where giftcard_id = ${card_id} and user_id=${user_id}`;
+  db.query(editQuery, (error, data) => {
+    if (error) return res.json(error);
+    else return res.json(data);
+  });
+  db.query("delete from carts where quantity=0");
+});
+
 
 app.post("/api/changepassword", (req, res) => {
   const email = req.body.email;

@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import Navbar from "./Navbar";
 import { Link } from "react-router-dom";
-import "../Content/theme.css"
+import "./Styles/theme.css"
 function HomePage() {
   const [loadData, setLoadData] = useState(0);
   return (

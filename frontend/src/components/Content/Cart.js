@@ -34,22 +34,22 @@ function CartPanel({ open, onClose, onCartChange }) {
       .then((res) => setGiftCardData(res.data))
       .catch((err) => console.log(err));
   }, [open, userId]);
-  const handleRemoveCard = (item) => {
-    axios
-      .delete("http://localhost:8081/api/deletegiftcart", {
-        data: { id: Number(item.id) },
-      })
-      .then(() => {
-        if (onCartChange) onCartChange();
-        axios
-          .post("http://localhost:8081/carts", { user_id: userId })
-          .then((res) => {
-            setCartData(res.data);
-          })
-          .catch((err) => console.log(err));
-      })
-      .catch((err) => console.log(err));
-  };
+  // const handleRemoveCard = (item) => {
+  //   axios
+  //     .delete("http://localhost:8081/api/deletegiftcart", {
+  //       data: { id: Number(item.id) },
+  //     })
+  //     .then(() => {
+  //       if (onCartChange) onCartChange();
+  //       axios
+  //         .post("http://localhost:8081/carts", { user_id: userId })
+  //         .then((res) => {
+  //           setCartData(res.data);
+  //         })
+  //         .catch((err) => console.log(err));
+  //     })
+  //     .catch((err) => console.log(err));
+  // };
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
@@ -62,7 +62,7 @@ function CartPanel({ open, onClose, onCartChange }) {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [open, onClose]);
 
-  const handleQuantity = (product_id, quantity) => {
+  const handleQuantity = (product_id, card_id, quantity) => {
     if (!userId) {
       let localCart = JSON.parse(localStorage.getItem("cart")) || {};
       if (localCart[product_id]) {
@@ -76,20 +76,38 @@ function CartPanel({ open, onClose, onCartChange }) {
       if (onCartChange) onCartChange();
       return;
     }
-    const dataObject = {
-      product_id: product_id,
-      quantity: quantity,
-      user_id: localStorage.getItem("user_id"),
-    };
-    axios
-      .post("http://localhost:8081/api/quantity", dataObject)
-      .then((responce) => {
-        console.log("Responce :", responce.data);
-        if (onCartChange) onCartChange();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    if (product_id) {
+      const dataObject = {
+        product_id: product_id,
+        quantity: quantity,
+        user_id: userId,
+      };
+      axios
+        .post("http://localhost:8081/api/productquantity", dataObject)
+        .then((responce) => {
+          console.log("Responce :", responce.data);
+          if (onCartChange) onCartChange();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
+    if(card_id){
+      const dataObject = {
+        card_id: card_id,
+        quantity: quantity,
+        user_id: userId,
+      };
+      axios
+        .post("http://localhost:8081/api/cardquantity", dataObject)
+        .then((responce) => {
+          console.log("Responce :", responce.data);
+          if (onCartChange) onCartChange();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
     const userObject = {
       user_id: userId,
     };
@@ -155,38 +173,30 @@ function CartPanel({ open, onClose, onCartChange }) {
                 </h4>
                 <p>₹{item.price}</p>
               </div>
-              <div
-                className="quantity-controls"
-                style={{
-                  display: giftCardData.find(
-                    (data) => data.id === item.giftcard_id
-                  )?.id
-                    ? "none"
-                    : "flex",
-                }}
-              >
-                <button onClick={() => handleQuantity(item.product_id, -1)}>
+              <div className="quantity-controls">
+                <button
+                  onClick={() =>
+                    handleQuantity(
+                      item.product_id || null,
+                      item.giftcard_id || null,
+                      -1
+                    )
+                  }
+                >
                   -
                 </button>
                 <span>{item.quantity}</span>
-                <button onClick={() => handleQuantity(item.product_id, 1)}>
+                <button
+                  onClick={() =>
+                    handleQuantity(
+                      item.product_id || null,
+                      item.giftcard_id || null,
+                      1
+                    )
+                  }
+                >
                   +
                 </button>
-              </div>
-              <div
-                className="remove-btn"
-                style={{
-                  display: giftCardData.find(
-                    (data) => data.id === item.giftcard_id
-                  )?.id
-                    ? "flex"
-                    : "none",
-                }}
-                onClick={() => {
-                  handleRemoveCard(item);
-                }}
-              >
-                X
               </div>
             </div>
           ))}

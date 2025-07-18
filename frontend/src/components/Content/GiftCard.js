@@ -1,7 +1,7 @@
 // BuyGiftCardPage.js
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import "./BuyGiftCardPage.css";
+import "./Styles/BuyGiftCardPage.css";
 import giftCardImg from "../../../src/assets/Tabster_GiftCard.png";
 import AppNavbar from "./Navbar";
 import axios from "axios";
@@ -9,57 +9,64 @@ import Toast from "./Toast";
 
 export default function BuyGiftCardPage() {
   const userId = localStorage.getItem("user_id");
-  const [selectedCard, setSelectedCard] = useState(null);
+  const [amount, setAmount] = useState();
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [loadData, setLoadData] = useState(0);
   const [openCart, setOpenCart] = useState(false);
   const [toastTheme, setToastTheme] = useState("success");
-  const [isOpen, setIsOpen] = useState(false);
-  const [data, setData] = useState([]);
-  const handleSelect = (data) => {
-    setSelectedCard(data);
-    setIsOpen(false);
-  };
 
   const handlePurchase = () => {
-    if (!selectedCard || !selectedCard.id) {
-      alert("Please select a valid gift card.");
+    const numericAmount = parseFloat(amount);
+    if (!numericAmount || numericAmount <= 0) {
+      setToastMessage("Enter a valid gift card amount.");
+      setToastTheme("danger");
+      setShowToast(true);
       return;
     }
-    if(!userId){
+    if (!userId) {
       setToastMessage("Login To Continue");
       setToastTheme("danger");
       setShowToast(true);
       return;
     }
+    const code = generateDiscountCode()
     axios
-      .post("http://localhost:8081/api/giftcardcart", {
-        giftCard: selectedCard,
+      .post("http://localhost:8081/addgiftcard", {
+        amount: numericAmount,
         user_id: userId,
+        code: code,
       })
-      .then((res) => {
-        if (res.data.items === "products") {
-          setToastMessage("Clear The Cart Of Products First.");
-          setToastTheme("danger");
-          setShowToast(true);
-        } else {
-          setLoadData((prev) => prev + 1);
-          setOpenCart(true);
-        }
+      .then((results) => {
+        axios
+          .post("http://localhost:8081/api/giftcardcart", {
+            giftCard: { value: numericAmount, id:results.data.insertId },
+            user_id: userId,
+          })
+          .then((res) => {
+            if (res.data.items === "products") {
+              setToastMessage("Clear The Cart Of Products First.");
+              setToastTheme("danger");
+              setShowToast(true);
+            } else {
+              setLoadData((prev) => prev + 1);
+              setOpenCart(true);
+            }
+          })
+          .catch((err) => console.error(err));
       })
       .catch((err) => console.error(err));
   };
-  useEffect(() => {
-    axios
-      .get("http://localhost:8081/giftcard")
-      .then((res) => {
-        setData(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
+
+  const generateDiscountCode = (length = 8) => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < length; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
   return (
     <>
       <AppNavbar
@@ -86,7 +93,7 @@ export default function BuyGiftCardPage() {
             className="gift-image"
             src={giftCardImg}
             alt="Gift Card"
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.08 }}
             transition={{ type: "spring", stiffness: 300 }}
           />
 
@@ -96,46 +103,19 @@ export default function BuyGiftCardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            <label className="gift-label">GIFT CARD</label>
-            <div className="dropdown-box">
-              <div
-                className="dropdown-selected"
-                onClick={() => setIsOpen((prev) => !prev)}
-              >
-                <div>
-                  {selectedCard ? (
-                    <>
-                      <i className="fa-solid fa-indian-rupee-sign"></i>{" "}
-                      {selectedCard.value}
-                    </>
-                  ) : (
-                    "Select Amount"
-                  )}
-                </div>
-                <span className="dropdown-arrow">{isOpen ? "▲" : "▼"}</span>
-              </div>
-              {isOpen && (
-                <ul className="dropdown-list">
-                  {data.map((data, index) => (
-                    <li
-                      key={index}
-                      className={`dropdown-item ${
-                        data.enabled === 1 ? "" : "disabled"
-                      }`}
-                      onClick={() => {
-                        if (data.enabled === 1) {
-                          handleSelect(data);
-                        }
-                      }}
-                    >
-                      <i className="fa-solid fa-indian-rupee-sign"></i>{" "}
-                      {data.value}
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <label className="gift-label">GIFT CARD AMOUNT</label>
+            <div className="gift-card-input-box">
+              <i className="fa-solid fa-indian-rupee-sign "></i>
+              <input
+                className="gift-amount-input no-spinner-input"
+                style={{ background: "transparent", border: "none" }}
+                type="number"
+                min="1"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
             </div>
-
             <motion.button
               className="gift-buy-button"
               whileHover={{ scale: 1.05 }}

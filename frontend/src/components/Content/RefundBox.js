@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "./Refund.css";
+import "./Styles/Refund.css";
 
 export default function RefundBox({ amount, paymentIntentId, onRefundSuccess }) {
   const [loading, setLoading] = useState(false);

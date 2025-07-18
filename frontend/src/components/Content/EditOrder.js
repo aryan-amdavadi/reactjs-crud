@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./EditOrder.css";
+import "./Styles/EditOrder.css";
 import axios from "axios";
 import Toast from "./Toast";
 import PaymentBox from "./PaymentBox";

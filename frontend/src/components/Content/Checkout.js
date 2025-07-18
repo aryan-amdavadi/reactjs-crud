@@ -23,7 +23,7 @@ export default function CheckoutPage() {
   const [productData, setProductData] = useState([]);
   const [activeAccordion, setActiveAccordion] = useState(null);
   const [cartData, setCartData] = useState([]);
-  const [giftCardData, setGiftCardData] = useState([])
+  const [giftCardData, setGiftCardData] = useState([]);
   const [paymentDone, setPaymentDone] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [giftValue, setGiftValue] = useState(0);
@@ -43,7 +43,7 @@ export default function CheckoutPage() {
   const stripePromise = loadStripe(
     process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
   );
-  
+
   const [showPayment, setShowPayment] = useState(false);
   const handleSelect = (option) => {
     setSelected(option.name);
@@ -286,9 +286,7 @@ export default function CheckoutPage() {
                   }`}
                 >
                   <div className="mb-3 ">
-                    <label  className="title">
-                      Email Address
-                    </label>
+                    <label className="title">Email Address</label>
                     <br />
                     <input
                       type="email"
@@ -303,12 +301,7 @@ export default function CheckoutPage() {
                   </div>
                   <div style={{ display: userId ? "none" : "block" }}>
                     <div style={{ margin: "2px", height: "68px" }}>
-                      <label
-                        
-                        className="title"
-                      >
-                        Password
-                      </label>
+                      <label className="title">Password</label>
                       <br />
                       <input
                         type="password"
@@ -352,8 +345,20 @@ export default function CheckoutPage() {
                 className="checkout-form"
                 id="checkoutDetails"
               >
-                <h2 className="section-title" style={{display:cartData[0]?.product_id?"block":"none"}}>Delivery Details</h2>
-                <div className="accordion-wrapper" style={{display:cartData[0]?.product_id?"block":"none"}}>
+                <h2
+                  className="section-title"
+                  style={{
+                    display: cartData[0]?.product_id ? "block" : "none",
+                  }}
+                >
+                  Delivery Details
+                </h2>
+                <div
+                  className="accordion-wrapper"
+                  style={{
+                    display: cartData[0]?.product_id ? "block" : "none",
+                  }}
+                >
                   <div
                     className="accordion-header"
                     onClick={() => toggleAccordion("shipping")}
@@ -478,10 +483,12 @@ export default function CheckoutPage() {
                     )}
                   </div>
                 )}
-                <div style={{display:cartData[0]?.product_id?"block":"none"}}>
-                  <label className="title">
-                    Delivery Notes
-                  </label>
+                <div
+                  style={{
+                    display: cartData[0]?.product_id ? "block" : "none",
+                  }}
+                >
+                  <label className="title">Delivery Notes</label>
                   <textarea
                     name="notes"
                     value={form.notes}
@@ -496,13 +503,18 @@ export default function CheckoutPage() {
                     display: showPayment ? "none" : "flex",
                   }}
                 >
-                  <button type="submit" className="submit-btn" onClick={()=>{
-                    if(cartData[0]?.product_id){
-                      return
-                    }else{
-                      setShowPayment(true)
-                    }
-                  }}>
+                  <button
+                    type="submit"
+                    className="submit-btn"
+                    onClick={() => {
+                      if (cartData[0]?.product_id) {
+                        return;
+                      } else {
+                        setShowPayment(true);
+                        setActiveAccordion("payment");
+                      }
+                    }}
+                  >
                     {paymentDone ? "Place Order" : "Procced To Pay"}
                   </button>
                   <button
@@ -552,11 +564,42 @@ export default function CheckoutPage() {
                             clientSecret={clientSecret}
                             width="660px"
                             onPaymentSuccess={(intent) => {
-                              if(!cartData[0]?.product_id){
-                                setToastMessage("Payment Completed");
-                                setToastTheme("success");
-                                setShowToast(true);
-                                return;
+                              if (!cartData[0]?.product_id) {
+                                const dataObject = {
+                                  user_id: userId,
+                                  orderData: cartData,
+                                  amount_paid: getFinalTotal().toFixed(2),
+                                  card_price: totalPrice.toFixed(2),
+                                };
+                                axios
+                                  .post(
+                                    "http://localhost:8081/api/addcardorder",
+                                    dataObject
+                                  )
+                                  .then((res) => {
+                                    setPaymentDone(true);
+                                    setShowPayment(false);
+                                    navigate("/thank-you", {
+                                      state: {
+                                        orderData: cartData,
+                                      },
+                                    });
+                                    const paymentIntentId = intent?.id;
+                                    if (paymentIntentId) {
+                                      axios.post(
+                                        "http://localhost:8081/api/save-payment-intent",
+                                        {
+                                          order_id: res.data.order_id,
+                                          user_id: userId,
+                                          payment_intent_id: paymentIntentId,
+                                          amount_paid:
+                                            getFinalTotal().toFixed(2),
+                                          refund_amount: null,
+                                        }
+                                      );
+                                    }
+                                  })
+                                  .catch((err) => {});
                               }
                               if (!selected && showTimeFrame) {
                                 setToastMessage("Select Timeframe");
@@ -600,8 +643,8 @@ export default function CheckoutPage() {
                                   dataObject
                                 )
                                 .then((res) => {
-                                  console.log(res.data);
                                   const paymentIntentId = intent?.id;
+
                                   if (paymentIntentId) {
                                     axios.post(
                                       "http://localhost:8081/api/save-payment-intent",
@@ -616,13 +659,23 @@ export default function CheckoutPage() {
                                   }
                                   setPaymentDone(true);
                                   setShowPayment(false);
-                                  setToastMessage("Order Placed..");
-                                  setToastTheme("success");
-                                  setShowToast(true);
-
-                                  setTimeout(() => {
-                                    navigate("/menu");
-                                  }, 3500);
+                                  setPaymentDone(true);
+                                  setShowPayment(false);
+                                  navigate("/thank-you", {
+                                    state: {
+                                      orderData: cartData,
+                                      breakdown: {
+                                        shippingCost:
+                                          shippingThreshold > totalPrice
+                                            ? Number(shippingFee.toFixed(2))
+                                            : 0.0,
+                                        discountAmount:
+                                          totalPrice - discountedTotal,
+                                        subTotal: totalPrice.toFixed(2),
+                                        amountPaid: getFinalTotal().toFixed(2),
+                                      },
+                                    },
+                                  });
                                 })
                                 .catch((err) => {});
                             }}
@@ -646,7 +699,9 @@ export default function CheckoutPage() {
                 <li key={i} className="item">
                   <span>
                     {productData.find((data) => data.id === item.product_id)
-                      ?.title || giftCardData.find((data) => data.id === item.giftcard_id)?.code}{" "}
+                      ?.title ||
+                      giftCardData.find((data) => data.id === item.giftcard_id)
+                        ?.code}{" "}
                     × {item.quantity}
                   </span>
                   <span>₹{(item.price * item.quantity).toFixed(2)}</span>
@@ -656,7 +711,10 @@ export default function CheckoutPage() {
             {!appliedCoupon && (
               <div
                 className="coupon-row"
-                style={{ display: "flex", justifyContent: "space-between" }}
+                style={{
+                  justifyContent: "space-between",
+                  display: cartData[0]?.product_id ? "flex" : "none",
+                }}
               >
                 <input
                   type="text"
@@ -673,7 +731,7 @@ export default function CheckoutPage() {
                 />
                 <button
                   className="submit-btn"
-                  style={{ height: "50px" , width:"10rem"}}
+                  style={{ height: "50px", width: "10rem" }}
                   onClick={applyCoupon}
                 >
                   Apply Discount
@@ -718,8 +776,11 @@ export default function CheckoutPage() {
                 </span>
               </div>
               <div
-                className="summary-row d-flex price-row"
-                style={{ justifyContent: "space-between" }}
+                className="summary-row price-row"
+                style={{
+                  justifyContent: "space-between",
+                  display: cartData[0]?.product_id ? "flex" : "none",
+                }}
               >
                 <span className="price-label">
                   Discount {appliedCoupon?.code?.toUpperCase() || ""}
@@ -742,8 +803,9 @@ export default function CheckoutPage() {
               </div>
               <div
                 className="summary-row price-row"
-                style={{ justifyContent: "space-between" ,
-                  display:giftValue>0?"flex":"none"
+                style={{
+                  justifyContent: "space-between",
+                  display: giftValue > 0 ? "flex" : "none",
                 }}
               >
                 <span className="price-label">
@@ -757,8 +819,11 @@ export default function CheckoutPage() {
                 </div>
               </div>
               <div
-                className="summary-row d-flex price-row"
-                style={{ justifyContent: "space-between" }}
+                className="summary-row price-row"
+                style={{
+                  justifyContent: "space-between",
+                  display: cartData[0]?.product_id ? "flex" : "none",
+                }}
               >
                 <span className="price-label">Shipping</span>
                 <span

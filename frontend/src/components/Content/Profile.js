@@ -66,7 +66,6 @@ export default function EditableProfilePage() {
       hobbies: JSON.stringify(profile.Hobbies || []),
       password: profile.password || "",
     };
-
     for (const [key, value] of Object.entries(plainObject)) {
       formData.append(key, value);
     }

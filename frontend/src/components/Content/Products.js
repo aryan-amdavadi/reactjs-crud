@@ -112,7 +112,7 @@ function Products() {
       user_id: localStorage.getItem("user_id"),
     };
     axios
-      .post("http://localhost:8081/api/quantity", dataObject)
+      .post("http://localhost:8081/api/productquantity", dataObject)
       .then((responce) => {
         console.log("Responce :", responce.data);
         setLoadData((prev) => prev + 1);
